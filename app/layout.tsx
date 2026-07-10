@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "तक्ष (TAKSH) | Premium Laser Engraving & Personalized Gifts",
   description:
-    "Custom laser engraving, wooden gifts, metal engraving, jewellery customization and personalized gifts by TAKSH.",
+    "Custom laser engraving, wooden gifts, metal engraving, jewellery customization and personalized gifts by तक्ष.",
 
   icons: {
     icon: "/favicon.png",
