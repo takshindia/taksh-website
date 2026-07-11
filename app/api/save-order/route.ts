@@ -13,33 +13,61 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { error } = await supabase.from("orders").insert([
-      {
-        customer_name: body.customer_name,
-email: body.email,
-mobile: body.mobile,
-        address: body.address,
-        city: body.city,
-        pincode: body.pincode,
-        product_name: body.product_name,
-        quantity: body.quantity,
-        amount: body.amount,
-        payment_status: body.payment_status,
-        razorpay_order_id: body.razorpay_order_id,
-        razorpay_payment_id: body.razorpay_payment_id,
-      },
-    ]);
+    const {
+      customer_name,
+      email,
+      mobile,
+      address,
+      city,
+      pincode,
+      product_name,
+      quantity,
+      amount,
+      payment_status,
+      status,
+      razorpay_order_id,
+      razorpay_payment_id,
+    } = body;
+
+    const { error } = await supabase
+      .from("orders")
+      .insert([
+        {
+          customer_name,
+          email,
+          mobile,
+          address,
+          city,
+          pincode,
+          product_name,
+          quantity,
+          amount,
+          payment_status,
+          status,
+          razorpay_order_id,
+          razorpay_payment_id,
+        },
+      ]);
 
     if (error) {
-  console.log("SUPABASE ERROR:", error);
-  return NextResponse.json({ error: error.message }, { status: 500 });
-}
-await resend.emails.send({
-  from: "onboarding@resend.dev",
-  to: body.email,
-  subject: "✅ Your तक्ष Order is Confirmed",
+      console.error(error);
 
-  html: `
+      return NextResponse.json(
+        {
+          error: error.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+    // Customer Confirmation Email
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: email,
+      subject: "✅ Your तक्ष Order is Confirmed",
+
+      html: `
 <div style="max-width:650px;margin:auto;background:#0f0f0f;color:#ffffff;padding:40px;border-radius:12px;font-family:Arial,sans-serif">
 
 <h1 style="text-align:center;color:#D4AF37;font-size:42px;margin:0;">
@@ -56,7 +84,7 @@ Premium Laser Engraving & Personalized Gifts
 ✅ Order Confirmed
 </h2>
 
-<p>Hello <b>${body.customer_name}</b>,</p>
+<p>Hello <b>${customer_name}</b>,</p>
 
 <p>
 Thank you for shopping with <b>तक्ष</b>.
@@ -66,22 +94,22 @@ Your order has been successfully placed.
 <table width="100%" cellpadding="10" style="background:#1b1b1b;border-radius:8px;margin-top:20px;">
 <tr>
 <td><b>Product</b></td>
-<td>${body.product_name}</td>
+<td>${product_name}</td>
 </tr>
 
 <tr>
 <td><b>Quantity</b></td>
-<td>${body.quantity}</td>
+<td>${quantity}</td>
 </tr>
 
 <tr>
 <td><b>Total</b></td>
-<td>₹${body.amount}</td>
+<td>₹${amount}</td>
 </tr>
 
 <tr>
 <td><b>Payment</b></td>
-<td>${body.payment_status}</td>
+<td>${payment_status}</td>
 </tr>
 </table>
 
@@ -93,81 +121,62 @@ Your order has been successfully placed.
 
 </div>
 `,
-});
+    });
+    // Admin Email
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "taksh.support03@gmail.com",
+      subject: "🛒 New Order Received - तक्ष",
 
-await resend.emails.send({
-  from: "onboarding@resend.dev",
-  to: "taksh.support03@gmail.com",
-
-  subject: "🛒 New Order Received - तक्ष",
-
-  html: `
+      html: `
 <div style="font-family:Arial,sans-serif;padding:20px;">
 
 <h2>🛒 New Order Received</h2>
 
-<p><b>Customer:</b> ${body.customer_name}</p>
+<p><b>Customer:</b> ${customer_name}</p>
+<p><b>Email:</b> ${email}</p>
+<p><b>Mobile:</b> ${mobile}</p>
 
-<p><b>Email:</b> ${body.email}</p>
-
-<p><b>Mobile:</b> ${body.mobile}</p>
-
-<p><b>Address:</b> ${body.address}</p>
-
-<p><b>City:</b> ${body.city}</p>
-
-<p><b>Pincode:</b> ${body.pincode}</p>
+<p><b>Address:</b> ${address}</p>
+<p><b>City:</b> ${city}</p>
+<p><b>Pincode:</b> ${pincode}</p>
 
 <hr>
 
-<p><b>Product:</b> ${body.product_name}</p>
+<p><b>Product:</b> ${product_name}</p>
 
-<p><b>Quantity:</b> ${body.quantity}</p>
+<p><b>Quantity:</b> ${quantity}</p>
 
-<p><b>Total:</b> ₹${body.amount}</p>
+<p><b>Total:</b> ₹${amount}</p>
 
-<p><b>Payment:</b> ${body.payment_status}</p>
+<p><b>Payment:</b> ${payment_status}</p>
 
-<p><b>Razorpay Order:</b> ${body.razorpay_order_id}</p>
+<p><b>Status:</b> ${status}</p>
 
-<p><b>Payment ID:</b> ${body.razorpay_payment_id}</p>
+<p><b>Razorpay Order ID:</b> ${razorpay_order_id}</p>
+
+<p><b>Razorpay Payment ID:</b> ${razorpay_payment_id}</p>
 
 </div>
 `,
-});
+    });
 
-console.log("INSERT SUCCESS");
+    return NextResponse.json({
+      success: true,
+      message: "Order saved successfully",
+    });
 
-return NextResponse.json({
-  success: true,
-});
-await resend.emails.send({
-  from: "onboarding@resend.dev",
-  to: "YOUR_ADMIN_EMAIL@gmail.com",
-
-  subject: "🛒 New Order Received - तक्ष",
-
-  html: `
-    <h2>New Order Received</h2>
-
-    <p><b>Customer:</b> ${body.customer_name}</p>
-    <p><b>Email:</b> ${body.email}</p>
-    <p><b>Mobile:</b> ${body.mobile}</p>
-
-    <hr/>
-
-    <p><b>Product:</b> ${body.product_name}</p>
-    <p><b>Quantity:</b> ${body.quantity}</p>
-
-    <p><b>Total:</b> ₹${body.amount}</p>
-
-    <p><b>Payment:</b> ${body.payment_status}</p>
-  `,
-});
   } catch (err) {
+    console.error(err);
+
     return NextResponse.json(
-      { error: "Failed to save order" },
-      { status: 500 }
+      {
+        success: false,
+        error: "Failed to save order",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
