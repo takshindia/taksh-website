@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 interface CartItem {
@@ -45,7 +46,7 @@ export default function CartPage() {
       item.id === id
         ? {
             ...item,
-            qty: item.qty > 1 ? item.qty - 1 : 1,
+            qty: Math.max(1, item.qty - 1),
           }
         : item
     );
@@ -54,11 +55,7 @@ export default function CartPage() {
   }
 
   function removeItem(id: number) {
-    const updated = cart.filter(
-      (item) => item.id !== id
-    );
-
-    updateCart(updated);
+    updateCart(cart.filter((item) => item.id !== id));
   }
 
   function clearCart() {
@@ -73,7 +70,7 @@ export default function CartPage() {
   );
 
   const totalAmount = cart.reduce(
-    (sum, item) => sum + item.qty * item.price,
+    (sum, item) => sum + item.price * item.qty,
     0
   );
 
@@ -83,7 +80,7 @@ export default function CartPage() {
         minHeight: "100vh",
         background: "#0a0a0a",
         color: "white",
-        padding: "40px",
+        padding: "50px 20px",
       }}
     >
       <div
@@ -106,40 +103,47 @@ export default function CartPage() {
         <h1
           style={{
             color: "#d4af37",
-            fontSize: "40px",
-            marginTop: "30px",
-            marginBottom: "30px",
+            fontSize: "42px",
+            marginTop: "25px",
+            marginBottom: "35px",
           }}
         >
-          Shopping Cart
+          🛒 Shopping Cart
         </h1>
         {cart.length === 0 ? (
           <div
             style={{
               textAlign: "center",
-              padding: "80px 20px",
               background: "#151515",
-              borderRadius: "16px",
+              padding: "80px 20px",
+              borderRadius: "20px",
+              border: "1px solid rgba(212,175,55,.2)",
             }}
           >
-            <h2 style={{ color: "#d4af37" }}>
+            <h2 style={{ color: "#d4af37", fontSize: "32px" }}>
               🛒 Your Cart is Empty
             </h2>
 
-            <p style={{ color: "#ccc", marginTop: "10px" }}>
-              Add some amazing TAKSH products.
+            <p
+              style={{
+                color: "#aaa",
+                marginTop: "15px",
+                fontSize: "18px",
+              }}
+            >
+              Looks like you haven't added any products yet.
             </p>
 
             <Link
               href="/products"
               style={{
                 display: "inline-block",
-                marginTop: "25px",
+                marginTop: "30px",
                 background: "#d4af37",
-                color: "#000",
-                padding: "12px 24px",
-                borderRadius: "8px",
+                color: "#111",
                 textDecoration: "none",
+                padding: "15px 35px",
+                borderRadius: "12px",
                 fontWeight: "bold",
               }}
             >
@@ -154,26 +158,30 @@ export default function CartPage() {
                 style={{
                   display: "flex",
                   gap: "20px",
-                  background: "#151515",
-                  borderRadius: "15px",
-                  padding: "20px",
-                  marginBottom: "20px",
                   alignItems: "center",
+                  background: "#151515",
+                  padding: "20px",
+                  borderRadius: "18px",
+                  border: "1px solid rgba(212,175,55,.15)",
+                  marginBottom: "20px",
+                  flexWrap: "wrap",
                 }}
               >
-                <img
+                <Image
                   src={item.image_url}
                   alt={item.name}
+                  width={120}
+                  height={120}
                   style={{
-                    width: "120px",
-                    height: "120px",
-                    objectFit: "cover",
                     borderRadius: "12px",
+                    objectFit: "cover",
                   }}
                 />
 
                 <div style={{ flex: 1 }}>
-                  <h2>{item.name}</h2>
+                  <h2 style={{ marginBottom: "10px" }}>
+                    {item.name}
+                  </h2>
 
                   <h3
                     style={{
@@ -186,22 +194,18 @@ export default function CartPage() {
                   <div
                     style={{
                       display: "flex",
+                      gap: "12px",
                       alignItems: "center",
-                      gap: "10px",
                       marginTop: "15px",
                     }}
                   >
-                    <button
-                      onClick={() => decreaseQty(item.id)}
-                    >
+                    <button onClick={() => decreaseQty(item.id)}>
                       −
                     </button>
 
                     <strong>{item.qty}</strong>
 
-                    <button
-                      onClick={() => increaseQty(item.id)}
-                    >
+                    <button onClick={() => increaseQty(item.id)}>
                       +
                     </button>
                   </div>
@@ -211,11 +215,12 @@ export default function CartPage() {
                   onClick={() => removeItem(item.id)}
                   style={{
                     background: "#dc2626",
-                    color: "#fff",
+                    color: "white",
                     border: "none",
-                    padding: "10px 18px",
-                    borderRadius: "8px",
+                    padding: "12px 18px",
+                    borderRadius: "10px",
                     cursor: "pointer",
+                    fontWeight: "bold",
                   }}
                 >
                   🗑 Remove
@@ -225,41 +230,49 @@ export default function CartPage() {
             <div
               style={{
                 background: "#151515",
-                borderRadius: "15px",
-                padding: "25px",
-                marginTop: "30px",
+                borderRadius: "18px",
+                border: "1px solid rgba(212,175,55,.2)",
+                padding: "30px",
+                marginTop: "35px",
               }}
             >
               <h2
                 style={{
                   color: "#d4af37",
-                  marginBottom: "20px",
+                  marginBottom: "25px",
                 }}
               >
                 Order Summary
               </h2>
 
-              <p
+              <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginBottom: "10px",
+                  marginBottom: "15px",
                 }}
               >
                 <span>Total Items</span>
                 <strong>{totalItems}</strong>
-              </p>
+              </div>
 
-              <p
+              <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  marginBottom: "20px",
+                  marginBottom: "25px",
                 }}
               >
                 <span>Total Amount</span>
-                <strong>₹ {totalAmount}</strong>
-              </p>
+                <strong
+                  style={{
+                    color: "#d4af37",
+                    fontSize: "22px",
+                  }}
+                >
+                  ₹ {totalAmount}
+                </strong>
+              </div>
 
               <div
                 style={{
@@ -273,7 +286,7 @@ export default function CartPage() {
                   style={{
                     flex: 1,
                     background: "#dc2626",
-                    color: "#fff",
+                    color: "white",
                     border: "none",
                     padding: "15px",
                     borderRadius: "10px",
@@ -289,7 +302,7 @@ export default function CartPage() {
                   style={{
                     flex: 2,
                     background: "#d4af37",
-                    color: "#000",
+                    color: "#111",
                     border: "none",
                     padding: "15px",
                     borderRadius: "10px",

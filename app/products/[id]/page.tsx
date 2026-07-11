@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -13,10 +14,13 @@ export default function ProductDetailsPage() {
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchProduct();
-  }, []);
+    if (id) {
+      fetchProduct();
+    }
+  }, [id]);
 
   async function fetchProduct() {
     setLoading(true);
@@ -28,10 +32,20 @@ export default function ProductDetailsPage() {
       .single();
 
     if (error) {
-      console.log(error);
-    } else {
-      setProduct(data);
+      console.error(error);
+      setLoading(false);
+      return;
     }
+
+    setProduct(data);
+
+    const { data: related } = await supabase
+      .from("products")
+      .select("*")
+      .neq("id", id)
+      .limit(4);
+
+    setRelatedProducts(related || []);
 
     setLoading(false);
   }
@@ -39,9 +53,13 @@ export default function ProductDetailsPage() {
   function addToCart() {
     if (!product) return;
 
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    let cart = JSON.parse(
+      localStorage.getItem("cart") || "[]"
+    );
 
-    const index = cart.findIndex((item: any) => item.id === product.id);
+    const index = cart.findIndex(
+      (item: any) => item.id === product.id
+    );
 
     if (index >= 0) {
       cart[index].qty += 1;
@@ -58,63 +76,63 @@ export default function ProductDetailsPage() {
     localStorage.setItem("cart", JSON.stringify(cart));
 
     alert("✅ Product Added To Cart");
-
-    router.push("/cart");
   }
-
   function buyNow() {
     addToCart();
     router.push("/checkout");
   }
 
   function whatsappOrder() {
-    const message = encodeURIComponent(
-      `Hello TAKSH 👋
+    if (!product) return;
 
-I want to order:
+    const message = encodeURIComponent(`Hello तक्ष 👋
 
-Product : ${product.name}
-Price : ₹${product.price}
+I want to order this product.
 
-Please contact me.`
+Product: ${product.name}
+Price: ₹${product.price}
+
+Please contact me.`);
+
+    window.open(
+      `https://wa.me/919664644034?text=${message}`,
+      "_blank"
     );
-
-    window.open(`https://wa.me/919664644034?text=${message}`, "_blank");
   }
 
   if (loading) {
     return (
-      <div
+      <main
         style={{
           minHeight: "100vh",
+          background: "#0a0a0a",
+          color: "white",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          background: "#0a0a0a",
-          color: "white",
-          fontSize: "22px",
+          fontSize: "24px",
         }}
       >
         Loading Product...
-      </div>
+      </main>
     );
   }
 
   if (!product) {
     return (
-      <div
+      <main
         style={{
           minHeight: "100vh",
+          background: "#0a0a0a",
+          color: "white",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          background: "#0a0a0a",
-          color: "white",
-          fontSize: "22px",
+          fontSize: "24px",
         }}
       >
         Product Not Found
-      </div>
+      </main>
     );
   }
 
@@ -153,14 +171,19 @@ Please contact me.`
             alignItems: "center",
           }}
         >
-          <img
-            src={product.image_url || "https://via.placeholder.com/600x600"}
+          <Image
+            src={
+              product.image_url ||
+              "https://via.placeholder.com/600x600"
+            }
             alt={product.name}
+            width={600}
+            height={600}
             style={{
               width: "100%",
+              height: "auto",
               borderRadius: "20px",
               objectFit: "cover",
-              background: "#1a1a1a",
             }}
           />
 
@@ -191,14 +214,14 @@ Please contact me.`
                 fontSize: "18px",
               }}
             >
-              {product.description || "Premium personalized product from TAKSH."}
+              {product.description ||
+                "Premium personalized product from तक्ष."}
             </p>
-
             <div
               style={{
-                marginTop: "35px",
                 display: "grid",
                 gap: "15px",
+                marginTop: "35px",
               }}
             >
               <button
@@ -206,12 +229,12 @@ Please contact me.`
                 style={{
                   padding: "16px",
                   background: "#d4af37",
-                  color: "#000",
+                  color: "#111",
                   border: "none",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
                   fontWeight: "bold",
                   fontSize: "18px",
-                  cursor: "pointer",
                 }}
               >
                 🛒 Add To Cart
@@ -224,10 +247,10 @@ Please contact me.`
                   background: "#222",
                   color: "#fff",
                   border: "1px solid #d4af37",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
                   fontWeight: "bold",
                   fontSize: "18px",
-                  cursor: "pointer",
                 }}
               >
                 ⚡ Buy Now
@@ -240,10 +263,10 @@ Please contact me.`
                   background: "#25D366",
                   color: "#fff",
                   border: "none",
-                  borderRadius: "10px",
+                  borderRadius: "12px",
+                  cursor: "pointer",
                   fontWeight: "bold",
                   fontSize: "18px",
-                  cursor: "pointer",
                 }}
               >
                 💬 Order on WhatsApp
@@ -254,38 +277,123 @@ Please contact me.`
               style={{
                 marginTop: "40px",
                 background: "#151515",
-                padding: "20px",
-                borderRadius: "15px",
+                padding: "22px",
+                borderRadius: "16px",
                 border: "1px solid rgba(212,175,55,.2)",
               }}
             >
               <h3
                 style={{
                   color: "#d4af37",
-                  marginBottom: "15px",
+                  marginBottom: "18px",
                 }}
               >
-                Why Buy From TAKSH?
+                Why Choose तक्ष?
               </h3>
 
               <ul
                 style={{
-                  lineHeight: "32px",
                   color: "#ddd",
+                  lineHeight: "32px",
                   paddingLeft: "20px",
                 }}
               >
-                <li>✔ Premium Quality Materials</li>
-                <li>✔ Personalized Engraving</li>
-                <li>✔ Fast Shipping Across India</li>
-                <li>✔ Secure Online Payment</li>
-                <li>✔ Made with ❤️ by TAKSH</li>
+                <li>✅ Premium Quality Materials</li>
+                <li>✅ Precision Laser Engraving</li>
+                <li>✅ Personalized Designs</li>
+                <li>✅ Secure Online Payment</li>
+                <li>✅ Fast Shipping Across India</li>
+                <li>✅ Friendly Customer Support</li>
               </ul>
             </div>
           </div>
         </div>
+        {relatedProducts.length > 0 && (
+          <div style={{ marginTop: "70px" }}>
+            <h2
+              style={{
+                color: "#d4af37",
+                fontSize: "32px",
+                marginBottom: "30px",
+              }}
+            >
+              Related Products
+            </h2>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit,minmax(240px,1fr))",
+                gap: "25px",
+              }}
+            >
+              {relatedProducts.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    background: "#151515",
+                    border: "1px solid rgba(212,175,55,.2)",
+                    borderRadius: "16px",
+                    overflow: "hidden",
+                  }}
+                >
+                  <Image
+                    src={
+                      item.image_url ||
+                      "https://via.placeholder.com/400"
+                    }
+                    alt={item.name}
+                    width={400}
+                    height={300}
+                    style={{
+                      width: "100%",
+                      height: "220px",
+                      objectFit: "cover",
+                    }}
+                  />
+
+                  <div style={{ padding: "18px" }}>
+                    <h3
+                      style={{
+                        color: "#d4af37",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      {item.name}
+                    </h3>
+
+                    <p
+                      style={{
+                        color: "#fff",
+                        fontWeight: "bold",
+                        marginBottom: "18px",
+                      }}
+                    >
+                      ₹ {item.price}
+                    </p>
+
+                    <Link
+                      href={`/products/${item.id}`}
+                      style={{
+                        display: "inline-block",
+                        background: "#d4af37",
+                        color: "#111",
+                        textDecoration: "none",
+                        padding: "10px 18px",
+                        borderRadius: "10px",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      View Product
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
-  
