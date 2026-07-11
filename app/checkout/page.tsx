@@ -23,7 +23,6 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [pincode, setPincode] = useState("");
-  
 
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +45,14 @@ export default function CheckoutPage() {
   );
 
   async function placeOrder() {
-    if (!name || !mobile || !address || !city || !pincode) {
+    if (
+      !name ||
+      !mobile ||
+      !email ||
+      !address ||
+      !city ||
+      !pincode
+    ) {
       alert("Please fill all details.");
       return;
     }
@@ -83,6 +89,7 @@ export default function CheckoutPage() {
         description: "Premium Personalized Order",
 
         order_id: order.id,
+
         handler: async function (response: any) {
           const productNames = cart
             .map((item) => item.name)
@@ -95,11 +102,11 @@ export default function CheckoutPage() {
             },
             body: JSON.stringify({
               customer_name: name,
-              mobile: mobile,
-              email: email,
-              address: address,
-              city: city,
-              pincode: pincode,
+              mobile,
+              email,
+              address,
+              city,
+              pincode,
 
               product_name: productNames,
 
@@ -127,6 +134,7 @@ export default function CheckoutPage() {
 
         prefill: {
           name,
+          email,
           contact: mobile,
         },
 
@@ -140,7 +148,7 @@ export default function CheckoutPage() {
       razor.open();
 
       setLoading(false);
-    } catch (err) {
+      } catch (err) {
       console.error(err);
 
       setLoading(false);
@@ -196,13 +204,14 @@ export default function CheckoutPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
-<input
-  type="email"
-  placeholder="Email Address"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  required
-/>
+
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+
               <input
                 placeholder="Mobile Number"
                 value={mobile}
@@ -228,7 +237,6 @@ export default function CheckoutPage() {
                 onChange={(e) => setPincode(e.target.value)}
               />
             </div>
-
             <div
               style={{
                 background: "#151515",
@@ -271,14 +279,15 @@ export default function CheckoutPage() {
                 }}
               />
 
-              <h3>Total Items : {totalQty}</h3>
+              <h3>Total Items: {totalQty}</h3>
 
               <h2
                 style={{
                   color: "#d4af37",
+                  marginTop: "10px",
                 }}
               >
-                Total : ₹{totalAmount}
+                Total: ₹{totalAmount}
               </h2>
 
               <button
@@ -295,10 +304,11 @@ export default function CheckoutPage() {
                   cursor: "pointer",
                   fontWeight: "bold",
                   fontSize: "16px",
+                  opacity: loading ? 0.7 : 1,
                 }}
               >
                 {loading
-                  ? "Please Wait..."
+                  ? "Processing Payment..."
                   : "Continue To Payment"}
               </button>
             </div>
