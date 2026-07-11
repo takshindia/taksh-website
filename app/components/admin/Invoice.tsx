@@ -8,6 +8,7 @@ interface Order {
   mobile: string;
   address: string;
   city?: string;
+  pincode?: string;
   product_name: string;
   quantity?: number;
   amount: number;
@@ -22,21 +23,41 @@ interface InvoiceProps {
   order: Order;
 }
 
-export default function Invoice({ order }: InvoiceProps) {
-  const invoiceNumber = `TAKSH-${String(order.id).slice(0, 8)}-${new Date().getFullYear()}`;
+export default function Invoice({
+  order,
+}: InvoiceProps) {
 
-  const downloadPDF = async () => {
+  const invoiceNo = `TAKSH-${order.id}-${new Date().getFullYear()}`;
+
+  async function downloadPDF() {
     const html2pdf = (await import("html2pdf.js")).default;
 
-    const element = document.getElementById("taksh-invoice");
-    if (!element) return;
+    const element =
+      document.getElementById("taksh-invoice");
+      const button = document.querySelector(".no-print") as HTMLElement;
 
-    html2pdf()
+if (button) {
+  button.style.display = "none";
+}
+
+    if (!element) return;
+    
+
+if (button) {
+  button.style.display = "none";
+}
+
+   await html2pdf()
       .set({
-        margin: 10,
-        filename: `TAKSH-${order.id}.pdf`,
-        image: { type: "jpeg", quality: 1 },
-        html2canvas: { scale: 2 },
+        margin: 5,
+        filename: `${invoiceNo}.pdf`,
+        image: {
+          type: "jpeg",
+          quality: 1,
+        },
+        html2canvas: {
+          scale: 2,
+        },
         jsPDF: {
           unit: "mm",
           format: "a4",
@@ -45,130 +66,252 @@ export default function Invoice({ order }: InvoiceProps) {
       })
       .from(element)
       .save();
-  };
+      if (button) {
+  button.style.display = "block";
+}
+  }
 
   return (
     <div
       id="taksh-invoice"
       style={{
-        background: "white",
-        color: "black",
-        padding: "40px",
-        borderRadius: "10px",
-        maxWidth: "800px",
+        background: "#fff",
+        color: "#111",
+        padding: "25px",
+        borderRadius: "16px",
+        maxWidth: "900px",
         margin: "0 auto",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Arial",
       }}
+
     >
       <h1
         style={{
           color: "#d4af37",
-          marginBottom: "5px",
+          margin: 0,
+          fontSize: "42px",
         }}
       >
-        तक्ष (TAKSH)
+        तक्ष
       </h1>
 
-      <p>Premium Laser Engraving & Personalized Gifts</p>
-
-      <hr />
-
-      <h2>Invoice</h2>
-
-      <p>
-        <strong>Invoice No:</strong> {invoiceNumber}
+      <p
+        style={{
+          marginTop: "8px",
+          color: "#666",
+        }}
+      >
+        Premium Laser Engraving & Personalized Gifts
       </p>
 
-      <p>
-        <strong>Date:</strong>{" "}
-        {new Date(order.created_at || Date.now()).toLocaleDateString("en-IN")}
-      </p>
+      <hr style={{ margin: "25px 0" }} />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: "40px",
+          flexWrap: "wrap",
+        }}
+      >
+        <div>
+          <h2 style={{ color: "#d4af37" }}>
+            Customer Details
+          </h2>
 
-      <hr />
+          <p>
+            <strong>Name :</strong> {order.customer_name}
+          </p>
+
+          <p>
+            <strong>Mobile :</strong> {order.mobile}
+          </p>
+
+          <p>
+            <strong>Address :</strong> {order.address}
+          </p>
+
+          <p>
+            <strong>City :</strong> {order.city || "-"}
+          </p>
+
+          <p>
+            <strong>Pincode :</strong> {order.pincode || "-"}
+          </p>
+        </div>
+
+        <div>
+          <h2 style={{ color: "#d4af37" }}>
+            Invoice Details
+          </h2>
+
+          <p>
+            <strong>Invoice :</strong> {invoiceNo}
+          </p>
+
+          <p>
+            <strong>Date :</strong>{" "}
+            {new Date(
+              order.created_at || Date.now()
+            ).toLocaleDateString("en-IN")}
+          </p>
+
+          <p>
+            <strong>Status :</strong> {order.status}
+          </p>
+
+          <p>
+            <strong>Payment :</strong>{" "}
+            {order.payment_status}
+          </p>
+        </div>
+      </div>
+
+      <hr style={{ margin: "25px 0" }} />
 
       <table
         style={{
           width: "100%",
           borderCollapse: "collapse",
-          marginTop: "20px",
+          border: "1px solid #ddd",
         }}
       >
+        <thead
+          style={{
+            background: "#d4af37",
+            color: "#000",
+          }}
+        >
+          <tr>
+            <th style={{ padding: "12px" }}>Product</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+
         <tbody>
           <tr>
-            <td><strong>Customer</strong></td>
-            <td>{order.customer_name}</td>
-          </tr>
+            <td style={{ padding: "12px" }}>
+              {order.product_name}
+            </td>
 
-          <tr>
-            <td><strong>Mobile</strong></td>
-            <td>{order.mobile}</td>
-          </tr>
+            <td style={{ textAlign: "center" }}>
+              {order.quantity || 1}
+            </td>
 
-          <tr>
-            <td><strong>Address</strong></td>
-            <td>{order.address}</td>
-          </tr>
+            <td style={{ textAlign: "center" }}>
+              ₹{order.amount}
+            </td>
 
-          <tr>
-            <td><strong>Product</strong></td>
-            <td>{order.product_name}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Quantity</strong></td>
-            <td>{order.quantity || 1}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Payment</strong></td>
-            <td>{order.payment_status}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Status</strong></td>
-            <td>{order.status}</td>
-          </tr>
-
-          <tr>
-            <td><strong>Total Amount</strong></td>
-            <td>₹{order.amount}</td>
+            <td
+              style={{
+                textAlign: "center",
+                fontWeight: "bold",
+              }}
+            >
+              ₹{order.amount}
+            </td>
           </tr>
         </tbody>
       </table>
+      <div
+        style={{
+          marginTop: "30px",
+          display: "flex",
+          justifyContent: "flex-end",
+        }}
+      >
+        <div
+          style={{
+            width: "320px",
+            border: "2px solid #d4af37",
+            borderRadius: "12px",
+            padding: "18px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+            }}
+          >
+            <span>Subtotal</span>
+            <strong>₹{order.amount}</strong>
+          </div>
 
-      <hr style={{ margin: "30px 0" }} />
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "10px",
+            }}
+          >
+            <span>Shipping</span>
+            <strong>FREE</strong>
+          </div>
+
+          <hr />
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "12px",
+              fontSize: "22px",
+              color: "#d4af37",
+              fontWeight: "bold",
+            }}
+          >
+            <span>Total</span>
+            <span>₹{order.amount}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr style={{ margin: "15px 0" }} />
 
       <div
         style={{
           textAlign: "center",
           color: "#666",
-          fontSize: "14px",
+          lineHeight: "28px",
         }}
       >
-        Thank you for shopping with <strong>तक्ष</strong> ❤️
+        <p>
+          Thank you for shopping with <strong>तक्ष (TAKSH)</strong>.
+        </p>
+
+        <p>
+          Premium Laser Engraving • Personalized Gifts • Made with तक्ष❤️ in India
+        </p>
       </div>
 
       <div
         style={{
-          textAlign: "center",
-          marginTop: "20px",
+          marginTop: "15px",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
-        <button
-          onClick={downloadPDF}
-          style={{
-            background: "#d4af37",
-            color: "#000",
-            padding: "12px 20px",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-        >
-          📄 Download PDF
-        </button>
       </div>
+       <button
+  onClick={downloadPDF}
+  className="no-print"
+  style={{
+    background: "#d4af37",
+    color: "#000",
+    border: "none",
+    padding: "14px 30px",
+    borderRadius: "10px",
+    cursor: "pointer",
+    fontWeight: "bold",
+    fontSize: "16px",
+  }}
+>
+  📄 Download PDF Invoice
+</button>
     </div>
+    
   );
 }

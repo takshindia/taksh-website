@@ -28,7 +28,7 @@ export default function PrivacyPage() {
         }}
       >
         <p>
-          TAKSH respects your privacy. Any personal information shared with us
+          तक्ष respects your privacy. Any personal information shared with us
           for custom orders, inquiries, or communication will remain completely
           confidential.
         </p>

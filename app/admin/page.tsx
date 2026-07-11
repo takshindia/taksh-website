@@ -20,6 +20,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
   const isAdmin = localStorage.getItem("admin");
+  console.log("ADMIN =", isAdmin);
 
   if (isAdmin !== "true") {
     router.push("/admin/login");

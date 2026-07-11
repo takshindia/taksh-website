@@ -11,16 +11,21 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
 
   function login() {
-    if (
-      email === "taksh.support03@gmail.com" &&
-      password === "Taksh@123"
-    ) {
+    const savedEmail =
+      localStorage.getItem("admin_email") ||
+      "taksh.support03@gmail.com";
+
+    const savedPassword =
+      localStorage.getItem("admin_password") ||
+      "Taksh@123";
+
+    if (email === savedEmail && password === savedPassword) {
       localStorage.setItem("admin", "true");
       router.push("/admin");
       return;
     }
 
-    alert("Invalid Email or Password");
+    alert("❌ Invalid Email or Password");
   }
 
   return (
@@ -31,16 +36,14 @@ export default function AdminLogin() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        padding: "20px",
       }}
     >
       <div
         style={{
-          width: "100%",
-          maxWidth: "420px",
+          width: "420px",
           background: "#151515",
-          borderRadius: "20px",
           padding: "40px",
+          borderRadius: "20px",
           border: "1px solid rgba(212,175,55,.2)",
           textAlign: "center",
         }}
@@ -50,10 +53,7 @@ export default function AdminLogin() {
           alt="TAKSH"
           width={140}
           height={140}
-          style={{
-            margin: "0 auto 20px",
-            height: "auto",
-          }}
+          style={{ margin: "0 auto 20px", height: "auto" }}
         />
 
         <h1
@@ -64,6 +64,7 @@ export default function AdminLogin() {
         >
           Admin Login
         </h1>
+
         <input
           type="email"
           placeholder="Admin Email"
@@ -77,8 +78,6 @@ export default function AdminLogin() {
             border: "1px solid #333",
             background: "#0f0f0f",
             color: "white",
-            fontSize: "16px",
-            outline: "none",
           }}
         />
 
@@ -90,13 +89,11 @@ export default function AdminLogin() {
           style={{
             width: "100%",
             padding: "14px",
-            marginBottom: "25px",
+            marginBottom: "20px",
             borderRadius: "10px",
             border: "1px solid #333",
             background: "#0f0f0f",
             color: "white",
-            fontSize: "16px",
-            outline: "none",
           }}
         />
 
@@ -110,23 +107,19 @@ export default function AdminLogin() {
             border: "none",
             borderRadius: "10px",
             fontWeight: "bold",
-            fontSize: "16px",
             cursor: "pointer",
           }}
         >
           Login
         </button>
+
         <p
           style={{
-            marginTop: "25px",
+            marginTop: "20px",
             color: "#888",
-            fontSize: "14px",
-            lineHeight: "22px",
           }}
         >
           तक्ष Admin Panel
-          <br />
-          Authorized access only.
         </p>
       </div>
     </main>

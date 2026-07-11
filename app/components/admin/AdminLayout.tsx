@@ -14,15 +14,16 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
-    const admin = localStorage.getItem("taksh_admin");
-
-    if (admin !== "loggedin") {
-      router.replace("/admin/login");
-    }
+   const admin = localStorage.getItem("admin");
+  console.log("LAYOUT ADMIN =", admin);
+  
+if (admin !== "true") {
+  router.replace("/admin/login");
+}
   }, [router]);
 
   function logout() {
-    localStorage.removeItem("taksh_admin");
+    localStorage.removeItem("admin");
     router.replace("/admin/login");
   }
 
@@ -87,4 +88,4 @@ export default function AdminLayout({
     </div>
   );
 }
-    
+  

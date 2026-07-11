@@ -21,7 +21,7 @@ export default function Footer() {
         <Link href="/">
           <Image
             src="/favicon.png"
-            alt="TAKSH"
+            alt="तक्ष"
             width={120}
             height={120}
             priority
@@ -91,7 +91,7 @@ export default function Footer() {
             fontSize: "14px",
           }}
         >
-          © 2026 TAKSH. All Rights Reserved.
+          © 2026 तक्ष. All Rights Reserved.
         </p>
       </div>
     </footer>

@@ -12,12 +12,44 @@ export default function OrderPopup({
   order,
   onClose,
 }: Props) {
+
+  function copyAddress() {
+    navigator.clipboard.writeText(
+      `${order.customer_name}
+
+${order.address}
+
+${order.city || ""}
+
+Mobile : ${order.mobile}`
+    );
+
+    alert("✅ Address Copied");
+  }
+
+  function openWhatsapp() {
+    const message = encodeURIComponent(
+`Hello ${order.customer_name},
+
+Your TAKSH order is currently:
+
+📦 ${order.status}
+
+Thank you for shopping with TAKSH ❤️`
+    );
+
+    window.open(
+      `https://wa.me/91${order.mobile}?text=${message}`,
+      "_blank"
+    );
+  }
+
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.75)",
+        background: "rgba(0,0,0,.8)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -26,13 +58,13 @@ export default function OrderPopup({
     >
       <div
         style={{
+          width: "92%",
+          maxWidth: "900px",
           background: "#111",
           color: "white",
-          width: "90%",
-          maxWidth: "850px",
-          borderRadius: "12px",
-          padding: "25px",
+          borderRadius: "16px",
           border: "2px solid #d4af37",
+          padding: "28px",
           maxHeight: "90vh",
           overflowY: "auto",
         }}
@@ -47,13 +79,12 @@ export default function OrderPopup({
         </h2>
 
         <Invoice order={order} />
-
         <div
           style={{
             display: "flex",
-            gap: "10px",
-            marginTop: "20px",
+            gap: "12px",
             flexWrap: "wrap",
+            marginTop: "20px",
           }}
         >
           <a
@@ -61,66 +92,70 @@ export default function OrderPopup({
             style={{
               background: "#0ea5e9",
               color: "white",
-              padding: "10px 16px",
+              padding: "12px 18px",
               borderRadius: "8px",
               textDecoration: "none",
+              fontWeight: "bold",
             }}
           >
-            📞 Call
-          </a>
-
-          <a
-            href={`https://wa.me/91${order.mobile}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              background: "#22c55e",
-              color: "white",
-              padding: "10px 16px",
-              borderRadius: "8px",
-              textDecoration: "none",
-            }}
-          >
-            💬 WhatsApp
+            📞 Call Customer
           </a>
 
           <button
-            onClick={() => navigator.clipboard.writeText(order.address)}
+            onClick={openWhatsapp}
             style={{
-              background: "#d4af37",
-              color: "black",
-              padding: "10px 16px",
+              background: "#22c55e",
+              color: "white",
+              padding: "12px 18px",
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
+              fontWeight: "bold",
+            }}
+          >
+            💬 WhatsApp Customer
+          </button>
+
+          <button
+            onClick={copyAddress}
+            style={{
+              background: "#d4af37",
+              color: "#000",
+              padding: "12px 18px",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
             📋 Copy Address
           </button>
+
           <button
             onClick={() => window.print()}
             style={{
-              background: "#ffffff",
+              background: "#fff",
               color: "#000",
-              padding: "10px 16px",
+              padding: "12px 18px",
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
             🖨️ Print Invoice
           </button>
-
           <button
             onClick={onClose}
             style={{
+              marginLeft: "auto",
               background: "#ef4444",
               color: "white",
-              padding: "10px 16px",
+              padding: "12px 18px",
               border: "none",
               borderRadius: "8px",
               cursor: "pointer",
-              marginLeft: "auto",
+              fontWeight: "bold",
             }}
           >
             ✖ Close

@@ -1,7 +1,7 @@
 export default function WhatsApp() {
   return (
     <a
-      href="https://wa.me/919664644034?text=Hello%20TAKSH,%20I%20want%20to%20place%20a%20custom%20order."
+      href="https://wa.me/919664644034?text=Hello%20तक्ष,%20I%20want%20to%20place%20a%20custom%20order."
       target="_blank"
       rel="noopener noreferrer"
       style={{

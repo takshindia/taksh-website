@@ -22,7 +22,7 @@ export default function AboutPage() {
             marginBottom: "20px",
           }}
         >
-          About TAKSH
+          About तक्ष
         </h1>
 
         <p
@@ -33,7 +33,7 @@ export default function AboutPage() {
             marginBottom: "60px",
           }}
         >
-          TAKSH is a premium laser engraving and personalized gifting brand,
+          तक्ष is a premium laser engraving and personalized gifting brand,
           creating unique products with precision, quality and creativity.
         </p>
 
@@ -67,7 +67,7 @@ export default function AboutPage() {
               padding: "25px",
             }}
           >
-            <h2 style={{ color: "#d4af37" }}>💎 Why Choose TAKSH?</h2>
+            <h2 style={{ color: "#d4af37" }}>💎 Why Choose तक्ष?</h2>
             <p style={{ color: "#d0d0d0", lineHeight: "1.8" }}>
               Premium finishing, custom designs, fast support and carefully
               crafted products for every occasion.

@@ -42,7 +42,7 @@ export default function TermsPage() {
         <br />
 
         <p>
-          TAKSH reserves the right to refuse any inappropriate or illegal
+          तक्ष reserves the right to refuse any inappropriate or illegal
           content requests.
         </p>
       </div>

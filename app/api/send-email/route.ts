@@ -7,8 +7,8 @@ export async function GET() {
     const data = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: "mahamayamomaiarts@gmail.com",
-      subject: "TAKSH Email Test",
-      html: "<h2>✅ Email System Working!</h2><p>Congratulations! Your TAKSH email system is ready.</p>",
+      subject: "तक्ष Email Test",
+      html: "<h2>✅ Email System Working!</h2><p>Congratulations! Your तक्ष email system is ready.</p>",
     });
 
     return Response.json(data);
