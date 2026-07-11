@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import AdminLayout from "../components/admin/AdminLayout";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     products: 0,
     categories: 0,
@@ -17,8 +19,15 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
   useEffect(() => {
-    loadDashboard();
-  }, []);
+  const isAdmin = localStorage.getItem("admin");
+
+  if (isAdmin !== "true") {
+    router.push("/admin/login");
+    return;
+  }
+
+  loadDashboard();
+}, []);
 
   async function loadDashboard() {
     const { count: products } = await supabase
