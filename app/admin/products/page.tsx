@@ -16,7 +16,7 @@ export default function AdminProducts() {
     name: "",
     desc: "",
     price: "",
-    offer_price: "",
+    discount_price: "",
     sku: "",
     stock: "",
     category_id: "",
@@ -82,7 +82,7 @@ if (editingId) {
       name: formData.name,
       description: formData.desc,
       price: Number(formData.price),
-      offer_price: Number(formData.offer_price || 0),
+      discount_price: Number(formData.discount_price || 0),
       sku: formData.sku,
       stock: Number(formData.stock || 0),
       category_id: Number(formData.category_id),
@@ -101,7 +101,7 @@ if (editingId) {
   name: "",
   desc: "",
   price: "",
-  offer_price: "",
+  discount_price: "",
   sku: "",
   stock: "",
   category_id: "",
@@ -119,7 +119,7 @@ setFile(null);
           name: formData.name,
           description: formData.desc,
           price: Number(formData.price),
-          offer_price: Number(formData.offer_price || 0),
+          discount_price: Number(formData.discount_price || 0),
           sku: formData.sku,
           stock: Number(formData.stock || 0),
           category_id: Number(formData.category_id),
@@ -138,7 +138,7 @@ setFile(null);
           name: "",
           desc: "",
           price: "",
-          offer_price: "",
+          discount_price: "",
           sku: "",
           stock: "",
           category_id: "",
@@ -163,7 +163,7 @@ function editProduct(product: any) {
   name: product.name || "",
   desc: product.description || "",
   price: String(product.price || ""),
-  offer_price: String(product.offer_price || ""),
+  discount_price: String(product.discount_price || ""),
   sku: product.sku || "",
   stock: String(product.stock || ""),
   category_id: String(product.category_id || ""),
@@ -296,11 +296,11 @@ const filteredProducts = products
   type="number"
   className="bg-black p-3 border border-gold/20"
   placeholder="Offer Price"
-  value={formData.offer_price}
+  value={formData.discount_price}
   onChange={(e) =>
     setFormData({
       ...formData,
-      offer_price: e.target.value,
+      discount_price: e.target.value,
     })
   }
 />
@@ -308,11 +308,11 @@ const filteredProducts = products
   type="number"
   className="bg-black p-3 border border-gold/20"
   placeholder="Offer Price"
-  value={formData.offer_price}
+  value={formData.discount_price}
   onChange={(e) =>
     setFormData({
       ...formData,
-      offer_price: e.target.value,
+      discount_price: e.target.value,
     })
   }
 />
@@ -440,7 +440,7 @@ const filteredProducts = products
         name: "",
         desc: "",
         price: "",
-        offer_price: "",
+        discount_price: "",
         sku: "",
         stock: "",
         category_id: "",
@@ -466,8 +466,8 @@ const filteredProducts = products
 
         {filteredProducts.map((p) => {
   const discount =
-    p.offer_price > 0
-      ? Math.round(((p.price - p.offer_price) / p.price) * 100)
+    p.discount_price > 0
+      ? Math.round(((p.price - p.discount_price) / p.price) * 100)
       : 0;
 
   return (
@@ -489,10 +489,10 @@ const filteredProducts = products
 </p>
 
   <div className="mt-1">
-  {p.offer_price > 0 ? (
+  {p.discount_price > 0 ? (
     <>
       <span className="text-yellow-400 font-bold text-lg">
-        ₹{p.offer_price}
+        ₹{p.discount_price}
       </span>
 
       <span className="text-gray-500 line-through ml-2">
@@ -529,7 +529,7 @@ const filteredProducts = products
         ⭐ Featured
       </span>
     )}
-    {p.offer_price > 0 && (
+    {p.discount_price > 0 && (
   <span className="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
     🔥 Offer
   </span>
@@ -538,14 +538,14 @@ const filteredProducts = products
 </div>
 
            <div className="text-right">
-  {p.offer_price > 0 ? (
+  {p.discount_price > 0 ? (
     <>
       <div className="text-red-500 line-through">
         ₹{p.price}
       </div>
 
       <div className="text-green-400 font-bold text-lg">
-        ₹{p.offer_price}
+        ₹{p.discount_price}
       </div>
 
       <div className="bg-red-600 text-white px-2 py-1 rounded text-xs inline-block mt-1">
