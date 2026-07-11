@@ -75,7 +75,7 @@ export default function ContactPage() {
 
             <h2 style={{ color: "#d4af37", marginTop: "25px" }}>📷 Instagram</h2>
             <a
-              href="https://instagram.com/mm._arts_gifts"
+              href="https://instagram.com/taksh.in03"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -83,7 +83,7 @@ export default function ContactPage() {
                 textDecoration: "none",
               }}
             >
-              @mm._arts_gifts
+              @taksh.in03
             </a>
 
             <h2 style={{ color: "#d4af37", marginTop: "25px" }}>📍 Address</h2>

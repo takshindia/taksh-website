@@ -71,7 +71,7 @@ export default function Footer() {
         <p style={{ marginTop: "20px" }}>
           📷 Instagram :
           <a
-            href="https://instagram.com/mm._arts_gifts"
+            href="https://instagram.com/taksh.in03"
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -80,7 +80,7 @@ export default function Footer() {
               marginLeft: "8px",
             }}
           >
-            @mm._arts_gifts
+            @taksh.in03
           </a>
         </p>
 
