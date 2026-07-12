@@ -2,137 +2,69 @@ import Image from "next/image";
 import Link from "next/link";
 
 export default function Hero() {
+  const features = [
+    "Laser Engraving",
+    "Personalized Gifts",
+    "Wood Craft",
+    "Acrylic",
+    "Corporate Gifts",
+    "Custom Orders",
+  ];
+
   return (
-    <section
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        alignItems: "center",
-        textAlign: "center",
-        padding: "100px 20px 60px",
-        background:
-          "linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)",
-      }}
-    >
-      <Image
-        src="/taksh-logo.png"
-        alt="तक्ष Logo"
-        width={420}
-        height={320}
-        priority
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          height: "auto",
-          marginBottom: "30px",
-        }}
-      />
+    <section className="min-h-screen bg-gradient-to-b from-black via-[#111111] to-black flex items-center justify-center px-5 py-20">
+      <div className="max-w-6xl mx-auto text-center">
 
-      <h1
-        style={{
-          color: "#ffffff",
-          fontSize: "clamp(34px,6vw,64px)",
-          fontWeight: "700",
-          lineHeight: "1.2",
-          margin: 0,
-        }}
-      >
-        Premium Laser
-        <br />
-        Engraving &
-        <br />
-        Personalized Gifts
-      </h1>
+        <Image
+          src="/taksh-logo.png"
+          alt="तक्ष Logo"
+          width={420}
+          height={320}
+          priority
+          className="w-56 sm:w-64 md:w-80 lg:w-[420px] h-auto mx-auto mb-8"
+        />
 
-      <p
-        style={{
-          color: "#cfcfcf",
-          marginTop: "28px",
-          fontSize: "clamp(16px,2vw,22px)",
-          maxWidth: "760px",
-          lineHeight: "1.8",
-          padding: "0 10px",
-        }}
-      >
-        Luxury laser engraved gifts, personalized jewellery, wooden crafts,
-        acrylic products, corporate gifting and custom creations made with
-        precision and premium finishing.
-      </p>
+        <h1 className="text-white font-bold leading-tight text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
+          Premium Laser
+          <br />
+          Engraving &
+          <br />
+          Personalized Gifts
+        </h1>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "16px",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          marginTop: "40px",
-        }}
-      >
-        <Link
-          href="/products"
-          style={{
-            background: "#d4af37",
-            color: "#111",
-            padding: "16px 36px",
-            borderRadius: "50px",
-            textDecoration: "none",
-            fontWeight: "700",
-            fontSize: "18px",
-            transition: "0.3s",
-          }}
-        >
-          Explore Collection
-        </Link>
+        <p className="text-gray-300 mt-6 max-w-3xl mx-auto text-base sm:text-lg md:text-xl leading-8">
+          Luxury laser engraved gifts, personalized jewellery, wooden crafts,
+          acrylic products, corporate gifting and custom creations made with
+          precision and premium finishing.
+        </p>
 
-        <Link
-          href="/contact"
-          style={{
-            border: "2px solid #d4af37",
-            color: "#d4af37",
-            padding: "16px 36px",
-            borderRadius: "50px",
-            textDecoration: "none",
-            fontWeight: "700",
-            fontSize: "18px",
-          }}
-        >
-          Contact Us
-        </Link>
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "center",
-          gap: "12px",
-          marginTop: "45px",
-        }}
-      >
-        {[
-          "Laser Engraving",
-          "Personalized Gifts",
-          "Wood Craft",
-          "Acrylic",
-          "Corporate Gifts",
-          "Custom Orders",
-        ].map((item) => (
-          <span
-            key={item}
-            style={{
-              border: "1px solid #333",
-              color: "#d4af37",
-              padding: "10px 18px",
-              borderRadius: "30px",
-              fontSize: "14px",
-              background: "#151515",
-            }}
+        <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+          <Link
+            href="/products"
+            className="bg-yellow-500 text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition"
           >
-            {item}
-          </span>
-        ))}
+            Explore Collection
+          </Link>
+
+          <Link
+            href="/contact"
+            className="border-2 border-yellow-500 text-yellow-500 px-8 py-4 rounded-full font-bold hover:bg-yellow-500 hover:text-black transition"
+          >
+            Contact Us
+          </Link>
+        </div>
+
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
+          {features.map((item) => (
+            <span
+              key={item}
+              className="px-4 py-2 rounded-full border border-yellow-500/20 bg-[#171717] text-yellow-400 text-sm"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+
       </div>
     </section>
   );

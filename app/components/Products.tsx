@@ -41,105 +41,55 @@ export default function Products() {
   ];
 
   return (
-    <section
-      style={{
-        background: "#0d0d0d",
-        padding: "90px 20px",
-        color: "white",
-      }}
-    >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "#d4af37",
-          fontSize: "clamp(34px,5vw,52px)",
-          marginBottom: "15px",
-        }}
-      >
-        Explore Our Categories
-      </h2>
+    <section className="bg-[#0d0d0d] py-16 md:py-24 px-5">
 
-      <p
-        style={{
-          textAlign: "center",
-          color: "#bdbdbd",
-          maxWidth: "700px",
-          margin: "0 auto 60px",
-          lineHeight: "1.8",
-          fontSize: "18px",
-        }}
-      >
-        Discover premium laser engraved products crafted with precision for
-        gifting, business branding and custom orders.
-      </p>
+      <div className="max-w-7xl mx-auto">
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(280px,1fr))",
-          gap: "30px",
-          maxWidth: "1300px",
-          margin: "0 auto",
-        }}
-      >
-        {categories.map((item) => (
-          <div
-            key={item.title}
-            style={{
-              background: "#171717",
-              border: "1px solid rgba(212,175,55,.25)",
-              borderRadius: "20px",
-              padding: "30px",
-              transition: "0.3s",
-            }}
-          >
+        <h2 className="text-center text-yellow-400 text-3xl sm:text-4xl md:text-5xl font-bold">
+          Explore Our Categories
+        </h2>
+
+        <p className="text-center text-gray-300 max-w-3xl mx-auto mt-5 mb-12 text-base sm:text-lg leading-8">
+          Discover premium laser engraved products crafted with precision for
+          gifting, business branding and custom orders.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+
+          {categories.map((item) => (
+
             <div
-              style={{
-                fontSize: "45px",
-                marginBottom: "15px",
-              }}
+              key={item.title}
+              className="bg-[#171717] border border-yellow-500/20 rounded-2xl p-7 hover:border-yellow-500 transition duration-300 hover:-translate-y-2"
             >
-              {item.icon}
+
+              <div className="text-5xl mb-5">
+                {item.icon}
+              </div>
+
+              <h3 className="text-yellow-400 text-2xl font-bold mb-4">
+                {item.title}
+              </h3>
+
+              <p className="text-gray-300 leading-7 min-h-[120px]">
+                {item.description}
+              </p>
+
+              <Link
+                href="/products"
+                className="inline-block mt-6 bg-yellow-500 text-black px-6 py-3 rounded-full font-bold hover:scale-105 transition"
+              >
+                View Products →
+              </Link>
+
             </div>
 
-            <h3
-              style={{
-                color: "#d4af37",
-                fontSize: "24px",
-                marginBottom: "15px",
-              }}
-            >
-              {item.title}
-            </h3>
+          ))}
 
-            <p
-              style={{
-                color: "#d0d0d0",
-                lineHeight: "1.8",
-                minHeight: "90px",
-              }}
-            >
-              {item.description}
-            </p>
+        </div>
 
-            <Link
-              href="/products"
-              style={{
-                display: "inline-block",
-                marginTop: "25px",
-                padding: "12px 22px",
-                background: "#d4af37",
-                color: "#111",
-                textDecoration: "none",
-                borderRadius: "30px",
-                fontWeight: "bold",
-              }}
-            >
-              View Products →
-            </Link>
-          </div>
-        ))}
       </div>
+
     </section>
   );
 }

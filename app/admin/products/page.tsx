@@ -16,6 +16,7 @@ type Product = {
   category_id: number | null;
   featured: boolean;
   image_url: string | null;
+  image_urls: string[] | null;
 };
 
 type Category = {
@@ -48,7 +49,7 @@ export default function AdminProducts() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   const [formData, setFormData] = useState(emptyForm);
 
@@ -104,7 +105,7 @@ export default function AdminProducts() {
 
   function resetForm() {
     setEditingId(null);
-    setImageFile(null);
+    setImageFiles([]);
     setFormData(emptyForm);
   }
 
@@ -124,6 +125,17 @@ export default function AdminProducts() {
   }, [formData.name]);
 
   async function uploadImage(file: File) {
+    
+    async function uploadImages(files: File[]) {
+  const urls: string[] = [];
+
+  for (const file of files) {
+    const url = await uploadImage(file);
+    urls.push(url);
+  }
+
+  return urls;
+}
     const ext = file.name.split(".").pop();
 
     const fileName =
@@ -152,15 +164,28 @@ export default function AdminProducts() {
       setSaving(true);
 
       let imageUrl = "";
+let imageUrls: string[] = [];
 
-      if (editingId) {
-        const current = products.find((p) => p.id === editingId);
-        imageUrl = current?.image_url || "";
-      }
+if (editingId) {
+  const current = products.find((p) => p.id === editingId);
+  imageUrl = current?.image_url || "";
+  imageUrls = current?.image_urls || [];
+}
 
-      if (imageFile) {
-        imageUrl = await uploadImage(imageFile);
-      }
+if (imageFiles.length > 0) {
+  imageUrls = await uploadImages(imageFiles);
+  async function uploadImages(files: File[]) {
+  const urls: string[] = [];
+
+  for (const file of files) {
+    const url = await uploadImage(file);
+    urls.push(url);
+  }
+
+  return urls;
+}
+  imageUrl = imageUrls[0];
+}
 
       const payload = {
         name: formData.name.trim(),
@@ -179,6 +204,7 @@ export default function AdminProducts() {
             : Number(formData.category_id),
         featured: formData.featured,
         image_url: imageUrl,
+        image_urls: imageUrls,
       };
 
       if (editingId) {
@@ -490,25 +516,25 @@ export default function AdminProducts() {
             <div className="md:col-span-2">
 
               <input
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  setImageFile(
-                    e.target.files?.[0] || null
-                  )
-                }
-                className="block w-full text-white"
-              />
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={(e) =>
+    setImageFiles(Array.from(e.target.files || []))
+  }
+  className="block w-full text-white"
+/>
 
-              {imageFile && (
-
-                <img
-                  src={URL.createObjectURL(imageFile)}
-                  alt="Preview"
-                  className="mt-4 w-32 h-32 rounded-lg object-cover border border-yellow-500"
-                />
-
-              )}
+<div className="flex flex-wrap gap-4 mt-4">
+  {imageFiles.map((file, index) => (
+    <img
+      key={index}
+      src={URL.createObjectURL(file)}
+      alt={`Preview ${index + 1}`}
+      className="w-24 h-24 rounded-lg object-cover border border-yellow-500"
+    />
+  ))}
+</div>
 
             </div>
 

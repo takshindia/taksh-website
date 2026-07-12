@@ -7,35 +7,19 @@ import Link from "next/link";
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const navLink = {
-    color: "white",
-    textDecoration: "none",
-    fontSize: "17px",
-    fontWeight: 500 as const,
-    transition: "0.3s",
-  };
+  const closeMenu = () => setMenuOpen(false);
+
+  const links = [
+    { name: "Home", href: "/" },
+    { name: "Products", href: "/products" },
+    { name: "About", href: "/about" },
+    { name: "Contact", href: "/contact" },
+  ];
 
   return (
-    <nav
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 999,
-        background: "rgba(10,10,10,0.95)",
-        backdropFilter: "blur(12px)",
-        borderBottom: "1px solid rgba(212,175,55,0.25)",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "1300px",
-          margin: "auto",
-          padding: "14px 20px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
+    <nav className="sticky top-0 z-50 bg-black/95 backdrop-blur border-b border-yellow-500/20">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-5 py-4">
+
         <Link href="/">
           <Image
             src="/taksh-logo.png"
@@ -43,84 +27,70 @@ export default function Navbar() {
             width={140}
             height={60}
             priority
-            style={{
-              width: "140px",
-              height: "auto",
-              cursor: "pointer",
-            }}
+            className="w-32 md:w-36 h-auto"
           />
         </Link>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "28px",
-            alignItems: "center",
-          }}
-        >
-          <Link href="/" style={navLink}>
-            Home
-          </Link>
-
-          <Link href="/products" style={navLink}>
-            Products
-          </Link>
-
-          <Link href="/about" style={navLink}>
-            About
-          </Link>
-
-          <Link href="/contact" style={navLink}>
-            Contact
-          </Link>
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-8">
+          {links.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-white hover:text-yellow-400 transition"
+            >
+              {item.name}
+            </Link>
+          ))}
 
           <Link
             href="/cart"
-            style={{
-              background: "#d4af37",
-              color: "#111",
-              padding: "10px 22px",
-              borderRadius: "30px",
-              textDecoration: "none",
-              fontWeight: "bold",
-            }}
+            className="bg-yellow-500 text-black px-5 py-2 rounded-full font-bold hover:scale-105 transition"
+          >
+            Cart
+          </Link>
+        </div>
+
+        {/* Mobile Button */}
+        <button
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="md:hidden text-yellow-400 text-3xl"
+        >
+          {menuOpen ? "✕" : "☰"}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div className="md:hidden bg-[#111] border-t border-yellow-500/20">
+
+          {links.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={closeMenu}
+              className="block px-6 py-4 text-white border-b border-gray-800 hover:bg-yellow-500 hover:text-black transition"
+            >
+              {item.name}
+            </Link>
+          ))}
+
+          <Link
+            href="/cart"
+            onClick={closeMenu}
+            className="block px-6 py-4 text-white border-b border-gray-800 hover:bg-yellow-500 hover:text-black transition"
           >
             Cart
           </Link>
 
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            style={{
-              background: "transparent",
-              border: "1px solid #d4af37",
-              color: "#d4af37",
-              padding: "8px 12px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "22px",
-            }}
+          <Link
+            href="/checkout"
+            onClick={closeMenu}
+            className="block px-6 py-4 text-white hover:bg-yellow-500 hover:text-black transition"
           >
-            ☰
-          </button>
-        </div>
-      </div>
+            Checkout
+          </Link>
 
-      {menuOpen && (
-        <div
-          style={{
-            background: "#111",
-            display: "flex",
-            flexDirection: "column",
-            padding: "20px",
-            gap: "18px",
-          }}
-        >
-          <Link href="/" style={navLink}>Home</Link>
-          <Link href="/products" style={navLink}>Products</Link>
-          <Link href="/about" style={navLink}>About</Link>
-          <Link href="/contact" style={navLink}>Contact</Link>
-          <Link href="/cart" style={navLink}>Cart</Link>
-          <Link href="/checkout" style={navLink}>Checkout</Link>
         </div>
       )}
     </nav>

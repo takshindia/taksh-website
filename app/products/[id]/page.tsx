@@ -62,14 +62,14 @@ export default function ProductDetailsPage() {
     );
 
     if (index >= 0) {
-      cart[index].qty += 1;
+      cart[index].qty += quantity;
     } else {
       cart.push({
         id: product.id,
         name: product.name,
         price: product.price,
         image_url: product.image_url,
-        qty: 1,
+        qty: quantity,
       });
     }
 
@@ -77,6 +77,7 @@ export default function ProductDetailsPage() {
 
     alert("✅ Product Added To Cart");
   }
+  const [quantity, setQuantity] = useState(1);
   function buyNow() {
     addToCart();
     router.push("/checkout");
@@ -172,13 +173,14 @@ Please contact me.`);
           }}
         >
           <Image
+          priority
             src={
               product.image_url ||
               "https://via.placeholder.com/600x600"
             }
             alt={product.name}
-            width={600}
-            height={600}
+            width={500}
+            height={500}
             style={{
               width: "100%",
               height: "auto",
@@ -197,7 +199,15 @@ Please contact me.`);
             >
               {product.name}
             </h1>
-
+<div
+  style={{
+    color: "#facc15",
+    fontSize: "18px",
+    marginBottom: "15px",
+  }}
+>
+  ⭐⭐⭐⭐⭐ (4.9) • 327 Reviews
+</div>
             <h2
               style={{
                 fontSize: "34px",
@@ -206,7 +216,17 @@ Please contact me.`);
             >
               ₹ {product.price}
             </h2>
-
+<p
+  style={{
+    color: product.stock > 0 ? "#22c55e" : "#ef4444",
+    fontWeight: "bold",
+    marginBottom: "20px",
+  }}
+>
+  {product.stock > 0
+    ? `✅ In Stock (${product.stock})`
+    : "❌ Out of Stock"}
+</p>
             <p
               style={{
                 color: "#cccccc",
@@ -218,59 +238,161 @@ Please contact me.`);
                 "Premium personalized product from तक्ष."}
             </p>
             <div
+  style={{
+    marginTop: "20px",
+    color: "#ccc",
+    lineHeight: "32px",
+  }}
+>
+  🚚 Delivery in 3-7 Days
+  <br />
+  🔒 Secure Payment
+  <br />
+  🔄 Easy Replacement
+  <br />
+  🇮🇳 Made in India
+</div>
+            <div
               style={{
                 display: "grid",
-                gap: "15px",
-                marginTop: "35px",
+                gap: "10px",
+                marginTop: "25px",
               }}
             >
-              <button
-                onClick={addToCart}
-                style={{
-                  padding: "16px",
-                  background: "#d4af37",
-                  color: "#111",
-                  border: "none",
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                }}
-              >
-                🛒 Add To Cart
-              </button>
+          
+                <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+    marginBottom: "5px",
+  }}
+>
+ 
+</div>
 
-              <button
-                onClick={buyNow}
-                style={{
-                  padding: "16px",
-                  background: "#222",
-                  color: "#fff",
-                  border: "1px solid #d4af37",
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                }}
-              >
-                ⚡ Buy Now
-              </button>
 
-              <button
-                onClick={whatsappOrder}
-                style={{
-                  padding: "16px",
-                  background: "#25D366",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "12px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  fontSize: "18px",
-                }}
-              >
-                💬 Order on WhatsApp
-              </button>
+              <div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "3px",
+    marginBottom: "5px",
+  }}
+>
+  
+</div>
+
+<div
+  style={{
+    display: "grid",
+    gap: "5px",
+    marginTop: "5px",
+  }}
+>
+  <div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "20px",
+    margin: "20px 0",
+  }}
+>
+  <button
+    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+    style={{
+      width: "40px",
+      height: "40px",
+      borderRadius: "50%",
+      border: "none",
+      background: "#d4af37",
+      color: "#111",
+      fontSize: "22px",
+      cursor: "pointer",
+    }}
+  >
+    −
+  </button>
+
+  <span
+    style={{
+      fontSize: "22px",
+      fontWeight: "bold",
+      minWidth: "30px",
+      textAlign: "center",
+    }}
+  >
+    {quantity}
+  </span>
+
+  <button
+    onClick={() => setQuantity(quantity + 1)}
+    style={{
+      width: "40px",
+      height: "40px",
+      borderRadius: "50%",
+      border: "none",
+      background: "#d4af37",
+      color: "#111",
+      fontSize: "22px",
+      cursor: "pointer",
+    }}
+  >
+    +
+  </button>
+</div>
+
+  <button
+    onClick={addToCart}
+    style={{
+      padding: "16px",
+      background: "#d4af37",
+      color: "#111",
+      border: "none",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: "bold",
+      fontSize: "18px",
+    }}
+  >
+    🛒 Add To Cart
+  </button>
+
+  <button
+    onClick={buyNow}
+    style={{
+      padding: "16px",
+      background: "#222",
+      color: "#fff",
+      border: "1px solid #d4af37",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: "bold",
+      fontSize: "18px",
+    }}
+  >
+    ⚡ Buy Now
+  </button>
+
+  <button
+    onClick={whatsappOrder}
+    style={{
+      padding: "16px",
+      background: "#25D366",
+      color: "#fff",
+      border: "none",
+      borderRadius: "12px",
+      cursor: "pointer",
+      fontWeight: "bold",
+      fontSize: "18px",
+    }}
+  >
+    💬 Order on WhatsApp
+  </button>
+</div>
+
+              
             </div>
 
             <div
@@ -339,6 +461,7 @@ Please contact me.`);
                   }}
                 >
                   <Image
+                  priority
                     src={
                       item.image_url ||
                       "https://via.placeholder.com/400"

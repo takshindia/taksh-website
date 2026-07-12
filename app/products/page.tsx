@@ -1,25 +1,46 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 
+type Product = {
+  id: number;
+  name: string;
+  description: string;
+  image_url: string;
+  price: number;
+  discount_price: number;
+  stock: number;
+  featured: boolean;
+  category: string;
+};
+
 export default function ProductsPage() {
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
   useEffect(() => {
-    fetchProducts();
+    loadProducts();
   }, []);
 
-  async function fetchProducts() {
-    const { data } = await supabase
+  async function loadProducts() {
+    setLoading(true);
+
+    const { data, error } = await supabase
       .from("products")
       .select("*")
-      .order("id");
+      .order("id", { ascending: false });
 
-    setProducts(data || []);
+    if (!error) {
+      setProducts((data || []) as Product[]);
+    }
+
+    setLoading(false);
   }
 
   const categories = [
@@ -34,224 +55,187 @@ export default function ProductsPage() {
     "Corporate",
   ];
 
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = `${p.name} ${p.description}`
-      .toLowerCase()
-      .includes(search.toLowerCase());
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const text =
+        `${p.name} ${p.description}`
+          .toLowerCase();
 
-    const matchesCategory =
-      category === "All" || p.category === category;
+      const matchSearch =
+        text.includes(search.toLowerCase());
 
-    return matchesSearch && matchesCategory;
-  });
+      const matchCategory =
+        category === "All" ||
+        p.category === category;
 
+      return matchSearch && matchCategory;
+    });
+  }, [products, search, category]);
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#0a0a0a",
-        color: "white",
-        padding: "50px 20px",
-      }}
-    >
-      <h1
-        style={{
-          textAlign: "center",
-          color: "#d4af37",
-          fontSize: "42px",
-          marginBottom: "15px",
-        }}
-      >
-        Premium Collection
-      </h1>
+    <main className="min-h-screen bg-black text-white px-4 py-10">
 
-      <p
-        style={{
-          textAlign: "center",
-          color: "#999",
-          marginBottom: "35px",
-        }}
-      >
-        {filteredProducts.length} Products Found
-      </p>
+      <div className="max-w-7xl mx-auto">
 
-      <input
-        type="text"
-        placeholder="🔍 Search Products..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          width: "100%",
-          maxWidth: "550px",
-          display: "block",
-          margin: "0 auto",
-          padding: "15px",
-          borderRadius: "12px",
-          border: "1px solid #d4af37",
-          background: "#111",
-          color: "white",
-          fontSize: "16px",
-        }}
-      />
+        <h1 className="text-3xl md:text-5xl font-bold text-center text-yellow-400">
+          Premium Collection
+        </h1>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          overflowX: "auto",
-          marginTop: "30px",
-          marginBottom: "40px",
-        }}
-      >
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setCategory(c)}
-            style={{
-              padding: "10px 18px",
-              borderRadius: "30px",
-              cursor: "pointer",
-              border: "none",
-              whiteSpace: "nowrap",
-              background:
-                category === c ? "#d4af37" : "#1b1b1b",
-              color:
-                category === c ? "#111" : "white",
-              fontWeight: "bold",
-            }}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+        <p className="text-center text-gray-400 mt-3 mb-8">
+          {filteredProducts.length} Products Found
+        </p>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit,minmax(300px,1fr))",
-          gap: "30px",
-        }}
-      >
-        {filteredProducts.map((p) => (
-          <div
-            key={p.id}
-            style={{
-              background: "#151515",
-              border: "1px solid rgba(212,175,55,0.15)",
-              borderRadius: "18px",
-              overflow: "hidden",
-              transition: "0.3s",
-            }}
-          >
-            <img
-              src={p.image_url}
-              alt={p.name}
-              style={{
-                width: "100%",
-                height: "260px",
-                objectFit: "cover",
-              }}
-            />
+        <div className="flex justify-center mb-8">
+          <input
+            type="text"
+            placeholder="🔍 Search Products..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full max-w-xl bg-[#111] border border-yellow-500/30 rounded-xl px-4 py-3 outline-none focus:border-yellow-400"
+          />
+        </div>
 
-            <div style={{ padding: "20px" }}>
-              <span
-                style={{
-                  display: "inline-block",
-                  background: "#d4af37",
-                  color: "#111",
-                  padding: "5px 12px",
-                  borderRadius: "20px",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                  marginBottom: "12px",
-                }}
-              >
-                ⭐ Bestseller
-              </span>
+        <div className="flex flex-wrap justify-center gap-3 mb-10">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCategory(c)}
+              className={`px-4 py-2 rounded-full font-semibold transition ${
+                category === c
+                  ? "bg-yellow-500 text-black"
+                  : "bg-[#1b1b1b] text-white hover:bg-yellow-500 hover:text-black"
+              }`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
 
-              <h2
-                style={{
-                  color: "#d4af37",
-                  marginBottom: "10px",
-                }}
-              >
-                {p.name}
-              </h2>
-
-              <p
-                style={{
-                  color: "#ccc",
-                  lineHeight: "1.6",
-                  minHeight: "70px",
-                }}
-              >
-                {p.description}
-              </p>
-
-              <h3
-                style={{
-                  color: "white",
-                  marginTop: "18px",
-                  fontSize: "24px",
-                }}
-              >
-                ₹ {p.price}
-              </h3>
-
-              <p
-                style={{
-                  color: p.stock > 0 ? "#22c55e" : "#ef4444",
-                  fontWeight: "bold",
-                  marginTop: "8px",
-                }}
-              >
-                {p.stock > 0
-                  ? `In Stock (${p.stock})`
-                  : "Out of Stock"}
-              </p>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "10px",
-                  marginTop: "20px",
-                }}
-              >
-                <Link
-                  href={`/products/${p.id}`}
-                  style={{
-                    flex: 1,
-                    background: "#d4af37",
-                    color: "#111",
-                    textDecoration: "none",
-                    textAlign: "center",
-                    padding: "12px",
-                    borderRadius: "10px",
-                    fontWeight: "bold",
-                  }}
-                >
-                  View Details
-                </Link>
-
-                <button
-                  onClick={() => alert("Cart feature coming soon")}
-                  style={{
-                    flex: 1,
-                    background: "#222",
-                    color: "white",
-                    border: "1px solid #d4af37",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                  }}
-                >
-                  Add to Cart
-                </button>
-              </div>
-            </div>
+        {loading ? (
+          <div className="text-center py-20 text-gray-400">
+            Loading Products...
           </div>
-        ))}
+        ) : (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+            {filteredProducts.map((p) => {
+
+              const hasOffer =
+                Number(p.discount_price) > 0;
+
+              const finalPrice =
+                hasOffer
+                  ? Number(p.discount_price)
+                  : Number(p.price);
+
+              const discount =
+                hasOffer
+                  ? Math.round(
+                      ((Number(p.price) - Number(p.discount_price)) /
+                        Number(p.price)) *
+                        100
+                    )
+                  : 0;
+
+              return (
+                <div
+                  key={p.id}
+                  className="bg-[#151515] border border-yellow-500/20 rounded-2xl overflow-hidden hover:border-yellow-500 transition"
+                >
+
+                  <div className="relative">
+                    <Image
+                      src={
+                        p.image_url ||
+                        "https://via.placeholder.com/500"
+                      }
+                      alt={p.name}
+                      width={500}
+                      height={500}
+                      className="w-full h-56 object-cover"
+                    />
+
+                    {p.featured && (
+                      <span className="absolute top-3 left-3 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                        ⭐ Featured
+                      </span>
+                    )}
+
+                    {hasOffer && (
+                      <span className="absolute top-3 right-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold">
+                        {discount}% OFF
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-5">
+
+                    <h2 className="text-xl font-bold text-yellow-400">
+                      {p.name}
+                    </h2>
+
+                    <p className="text-gray-400 text-sm mt-3 line-clamp-2">
+                      {p.description}
+                    </p>
+                    <div className="mt-5">
+
+                      {hasOffer ? (
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl font-bold text-white">
+                            ₹{finalPrice}
+                          </span>
+
+                          <span className="text-gray-500 line-through">
+                            ₹{p.price}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-2xl font-bold text-white">
+                          ₹{p.price}
+                        </span>
+                      )}
+
+                      <p
+                        className={`mt-3 font-semibold ${
+                          p.stock > 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {p.stock > 0
+                          ? `In Stock (${p.stock})`
+                          : "Out of Stock"}
+                      </p>
+
+                    </div>
+
+                    <div className="mt-6 flex flex-col sm:flex-row gap-3">
+
+                      <Link
+                        href={`/products/${p.id}`}
+                        className="flex-1 text-center bg-yellow-500 text-black font-bold py-3 rounded-xl hover:bg-yellow-400 transition"
+                      >
+                        View Details
+                      </Link>
+
+                      <button
+                        className="flex-1 border border-yellow-500 text-yellow-400 py-3 rounded-xl hover:bg-yellow-500 hover:text-black transition"
+                        onClick={() => alert("Add to Cart Coming Soon")}
+                      >
+                        Add To Cart
+                      </button>
+
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
+
+          </div>
+        )}
+
       </div>
+
     </main>
   );
 }
