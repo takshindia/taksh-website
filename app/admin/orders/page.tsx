@@ -8,17 +8,31 @@ import OrderPopup from "../../components/admin/OrderPopup";
 
 export interface Order {
   id: string;
+
   customer_name: string;
+  email?: string;
   mobile: string;
+
   address: string;
   city?: string;
+  pincode?: string;
+
   product_name: string;
   quantity: number;
   amount: number;
+
   payment_status: string;
   status: string;
+
   razorpay_order_id?: string;
   razorpay_payment_id?: string;
+
+  shipment_id?: number;
+  awb_code?: string;
+  courier_name?: string;
+  tracking_url?: string;
+  tracking_status?: string;
+
   created_at: string;
 }
 

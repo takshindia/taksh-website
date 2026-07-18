@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import AdminLayout from "../../components/admin/AdminLayout";
 
 export default function AdminCustomers() {
@@ -9,43 +8,25 @@ export default function AdminCustomers() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetchCustomers();
+    void fetchCustomers();
   }, []);
 
   async function fetchCustomers() {
-    const { data } = await supabase
-      .from("orders")
-      .select("*")
-      .order("id", { ascending: false });
-      console.log("Orders:", data);
+    try {
+      const response = await fetch("/api/admin/customers", {
+        cache: "no-store",
+      });
 
-    
-    
-      console.log(data);
-
-    const unique = new Map();
-
-    (data || []).forEach((o: any) => {
-      if (!unique.has(o.mobile)) {
-        unique.set(o.mobile, {
-          name: o.customer_name,
-          mobile: o.mobile,
-          city: o.city,
-          address: o.address,
-          orders: 1,
-          total: Number(o.amount || 0),
-        });
-      } else {
-        const c = unique.get(o.mobile);
-        c.orders += 1;
-        c.total += Number(o.amount || 0);
+      if (!response.ok) {
+        throw new Error("Failed to load customers.");
       }
-    });
-console.log("UNIQUE =", Array.from(unique.values()));
-setCustomers(Array.from(unique.values()));
 
-
-    
+      const payload = await response.json();
+      setCustomers(payload.customers || []);
+    } catch (error) {
+      console.error("Customer fetch failed:", error);
+      setCustomers([]);
+    }
   }
 
   const filtered = customers.filter((c) =>

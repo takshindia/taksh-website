@@ -54,29 +54,32 @@ export default function AdminProducts() {
   const [formData, setFormData] = useState(emptyForm);
 
   useEffect(() => {
-    fetchData();
+    void fetchData();
   }, []);
 
   async function fetchData() {
     setLoading(true);
 
-    const [{ data: productsData }, { data: categoriesData }] =
-      await Promise.all([
-        supabase
-          .from("products")
-          .select("*")
-          .order("id", { ascending: false }),
+    try {
+      const response = await fetch("/api/admin/products", {
+        cache: "no-store",
+      });
 
-        supabase
-          .from("categories")
-          .select("*")
-          .order("name"),
-      ]);
+      if (!response.ok) {
+        throw new Error("Failed to load products.");
+      }
 
-    setProducts((productsData || []) as Product[]);
-    setCategories((categoriesData || []) as Category[]);
+      const payload = await response.json();
 
-    setLoading(false);
+      setProducts((payload.products || []) as Product[]);
+      setCategories((payload.categories || []) as Category[]);
+    } catch (error) {
+      console.error("Product fetch failed:", error);
+      setProducts([]);
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleInputChange(

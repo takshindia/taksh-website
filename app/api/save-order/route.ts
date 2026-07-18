@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { createShipment, generateAWB } from "@/lib/shiprocket";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
@@ -29,25 +30,27 @@ export async function POST(req: NextRequest) {
       razorpay_payment_id,
     } = body;
 
-    const { error } = await supabase
-      .from("orders")
-      .insert([
-        {
-          customer_name,
-          email,
-          mobile,
-          address,
-          city,
-          pincode,
-          product_name,
-          quantity,
-          amount,
-          payment_status,
-          status,
-          razorpay_order_id,
-          razorpay_payment_id,
-        },
-      ]);
+    const { data: orderData, error } = await supabase
+  .from("orders")
+  .insert([
+    {
+      customer_name,
+      email,
+      mobile,
+      address,
+      city,
+      pincode,
+      product_name,
+      quantity,
+      amount,
+      payment_status,
+      status,
+      razorpay_order_id,
+      razorpay_payment_id,
+    },
+  ])
+  .select()
+  .single();
 
     if (error) {
       console.error(error);
@@ -61,13 +64,55 @@ export async function POST(req: NextRequest) {
         }
       );
     }
+
+try {
+  const shipment = await createShipment({
+    orderId: razorpay_order_id || `TAKSH-${Date.now()}`,
+    customer_name,
+    email,
+    mobile,
+    address,
+    city,
+    pincode,
+    product_name,
+    quantity,
+    amount,
+  });
+
+  const shipmentId = shipment.shipment_id;
+
+console.log("Shiprocket:", shipment);
+
+const awb = await generateAWB(shipmentId);
+
+console.log("AWB:", awb);
+
+const updateResult = await supabase
+  .from("orders")
+  .update({
+    shipment_id: shipmentId,
+    awb_code: awb?.awb_code || null,
+    courier_name: awb?.courier_name || null,
+    tracking_url: awb?.tracking_data?.track_url || null,
+    tracking_status: shipment.status,
+  })
+  .eq("id", orderData.id);
+
+console.log("Update Result:", updateResult);
+
+} catch (err) {
+  console.error("Shiprocket Error:", err);
+}
+
     // Customer Confirmation Email
-    await resend.emails.send({
+const emailResult = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: email,
       subject: "✅ Your तक्ष Order is Confirmed",
 
       html: `
+));
+
 <div style="max-width:650px;margin:auto;background:#0f0f0f;color:#ffffff;padding:40px;border-radius:12px;font-family:Arial,sans-serif">
 
 <h1 style="text-align:center;color:#D4AF37;font-size:42px;margin:0;">
@@ -123,12 +168,16 @@ Your order has been successfully placed.
 `,
     });
     // Admin Email
-    await resend.emails.send({
+    const adminEmail = await resend.emails.send({
       from: "onboarding@resend.dev",
       to: "taksh.support03@gmail.com",
       subject: "🛒 New Order Received - तक्ष",
 
       html: `
+    ));
+
+    console.log("Admin Email Sent");
+
 <div style="font-family:Arial,sans-serif;padding:20px;">
 
 <h2>🛒 New Order Received</h2>

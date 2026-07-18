@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 interface CartItem {
   id: number;
@@ -17,6 +18,9 @@ export default function CheckoutPage() {
 
   const [cart, setCart] = useState<CartItem[]>([]);
 
+  const [addresses, setAddresses] = useState<any[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState("");
+
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
@@ -27,12 +31,65 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const items = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
+    
+
+    async function loadAddresses() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data } = await supabase
+    .from("addresses")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  if (data) {
+    setAddresses(data);
+
+    if (data.length > 0) {
+      const a = data[0];
+
+      setSelectedAddress(a.id);
+
+      setName(a.full_name || "");
+      setMobile(a.phone || "");
+      setAddress(
+        `${a.address_line1} ${a.address_line2 || ""}`.trim()
+      );
+      setCity(a.city || "");
+      setPincode(a.pincode || "");
+    }
+  }
+}
+
+    async function loadCart() {
+  const { data, error } = await supabase
+    .from("cart")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (!error && data) {
+    const items = data.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      image_url: item.image_url,
+      qty: item.quantity,
+    }));
 
     setCart(items);
+  }
+}
+    loadCart();
+    loadAddresses();
+
   }, []);
+
+  
+  
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
@@ -45,6 +102,21 @@ export default function CheckoutPage() {
   );
 
   async function placeOrder() {
+
+    const selected = addresses.find(
+  (a) => a.id === selectedAddress
+);
+
+if (selected) {
+  setName(selected.full_name || "");
+  setMobile(selected.phone || "");
+  setAddress(
+    `${selected.address_line1} ${selected.address_line2 || ""}`.trim()
+  );
+  setCity(selected.city || "");
+  setPincode(selected.pincode || "");
+}
+
     if (
       !name ||
       !mobile ||
@@ -125,7 +197,10 @@ export default function CheckoutPage() {
             }),
           });
 
-          localStorage.removeItem("cart");
+          await supabase
+  .from("cart")
+  .delete()
+  .gt("id", 0);
 
           alert("✅ Payment Successful");
 
@@ -199,6 +274,90 @@ export default function CheckoutPage() {
                 gap: "15px",
               }}
             >
+              {addresses.length > 0 && (
+  <div
+    style={{
+      background: "#151515",
+      padding: "15px",
+      borderRadius: "12px",
+      marginBottom: "20px",
+    }}
+  >
+    <h3
+      style={{
+        color: "#d4af37",
+        marginBottom: "15px",
+      }}
+    >
+      Saved Addresses
+    </h3>
+
+    {addresses.map((item) => (
+      <label
+        key={item.id}
+        style={{
+          display: "block",
+          padding: "12px",
+          marginBottom: "10px",
+          border:
+            selectedAddress === item.id
+              ? "2px solid #d4af37"
+              : "1px solid #333",
+          borderRadius: "10px",
+          cursor: "pointer",
+        }}
+      >
+        <input
+          type="radio"
+          checked={selectedAddress === item.id}
+          onChange={() => {
+            setSelectedAddress(item.id);
+
+            setName(item.full_name || "");
+            setMobile(item.phone || "");
+            setAddress(
+              `${item.address_line1} ${item.address_line2 || ""}`.trim()
+            );
+            setCity(item.city || "");
+            setPincode(item.pincode || "");
+          }}
+        />
+
+        <div style={{ marginTop: "8px" }}>
+          <strong>{item.full_name}</strong>
+
+          <p>{item.phone}</p>
+
+          <p>
+            {item.address_line1}{" "}
+            {item.address_line2}
+          </p>
+
+          <p>
+            {item.city}, {item.state} - {item.pincode}
+          </p>
+        </div>
+      </label>
+    ))}
+
+    <button
+      type="button"
+      onClick={() => router.push("/addresses/new")}
+      style={{
+        marginTop: "10px",
+        background: "#d4af37",
+        color: "#000",
+        border: "none",
+        padding: "10px 15px",
+        borderRadius: "8px",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      + Add New Address
+    </button>
+  </div>
+)}
               <input
                 placeholder="Full Name"
                 value={name}

@@ -11,16 +11,25 @@ export default function AdminCategories() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetchCategories();
+    void fetchCategories();
   }, []);
 
   async function fetchCategories() {
-    const { data } = await supabase
-      .from("categories")
-      .select("*")
-      .order("id", { ascending: false });
+    try {
+      const response = await fetch("/api/admin/categories", {
+        cache: "no-store",
+      });
 
-    setCategories(data || []);
+      if (!response.ok) {
+        throw new Error("Failed to load categories.");
+      }
+
+      const payload = await response.json();
+      setCategories(payload.categories || []);
+    } catch (error) {
+      console.error("Category fetch failed:", error);
+      setCategories([]);
+    }
   }
 
   async function addCategory(e: React.FormEvent) {
@@ -45,7 +54,7 @@ export default function AdminCategories() {
     }
 
     setName("");
-    fetchCategories();
+    void fetchCategories();
   }
 
   async function deleteCategory(id: number) {
@@ -61,7 +70,7 @@ export default function AdminCategories() {
       return;
     }
 
-    fetchCategories();
+    void fetchCategories();
   }
 
   const filteredCategories = categories.filter((c: any) =>
@@ -141,7 +150,7 @@ export default function AdminCategories() {
                     if (error) {
                       alert(error.message);
                     } else {
-                      fetchCategories();
+                      void fetchCategories();
                     }
                   }}
                   className="text-blue-400 font-bold"

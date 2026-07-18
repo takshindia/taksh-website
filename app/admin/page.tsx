@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import AdminLayout from "../components/admin/AdminLayout";
 
 export default function AdminDashboard() {
@@ -19,52 +18,52 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
 
   useEffect(() => {
-  const isAdmin = localStorage.getItem("admin");
-  console.log("ADMIN =", isAdmin);
+    const isAdmin = window.localStorage.getItem("admin");
 
-  if (isAdmin !== "true") {
-    router.push("/admin/login");
-    return;
-  }
+    if (isAdmin !== "true") {
+      router.push("/admin/login");
+      return;
+    }
 
-  loadDashboard();
-}, []);
+    void loadDashboard();
+  }, [router]);
 
   async function loadDashboard() {
-    const { count: products } = await supabase
-      .from("products")
-      .select("*", { count: "exact", head: true });
+    try {
+      const response = await fetch("/api/admin/dashboard", {
+        cache: "no-store",
+      });
 
-    const { count: categories } = await supabase
-      .from("categories")
-      .select("*", { count: "exact", head: true });
+      if (!response.ok) {
+        throw new Error("Failed to load dashboard stats.");
+      }
 
-    const { data: orders } = await supabase
-      .from("orders")
-      .select("*")
-      .order("id", { ascending: false });
+      const payload = await response.json();
+      const orders = payload.recentOrders || [];
+      const uniqueCustomers = new Set(
+        orders.map((order: any) => order.mobile || order.customer_name)
+      );
 
-    const unique = new Set(
-      (orders || []).map(
-        (o: any) => o.mobile || o.customer_name
-      )
-    );
+      setStats({
+        products: Number(payload.products || 0),
+        categories: Number(payload.categories || 0),
+        orders: Number(payload.orders || 0),
+        customers: uniqueCustomers.size,
+        revenue: Number(payload.revenue || 0),
+      });
 
-    const revenue = (orders || []).reduce(
-      (sum: number, o: any) =>
-        sum + Number(o.amount || 0),
-      0
-    );
-
-    setStats({
-      products: products || 0,
-      categories: categories || 0,
-      orders: orders?.length || 0,
-      customers: unique.size,
-      revenue,
-    });
-
-    setRecentOrders((orders || []).slice(0, 5));
+      setRecentOrders(orders.slice(0, 5));
+    } catch (error) {
+      console.error("Dashboard load failed:", error);
+      setStats({
+        products: 0,
+        categories: 0,
+        orders: 0,
+        customers: 0,
+        revenue: 0,
+      });
+      setRecentOrders([]);
+    }
   }
 
   const cards = [

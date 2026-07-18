@@ -24,12 +24,48 @@ export default function ProductsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
 
+  const [wishlist, setWishlist] = useState<number[]>([]);
+
+async function addToWishlist(product: Product) {
+  const { error } = await supabase
+    .from("wishlist")
+    .insert({
+      name: product.name,
+      price: product.discount_price || product.price,
+      image_url: product.image_url,
+    });
+
+  if (!error) {
+    alert("❤️ Added to Wishlist");
+    loadWishlist();
+  }
+}
+
+async function loadWishlist() {
+  const { data } = await supabase
+    .from("wishlist")
+    .select("name");
+
+  if (data) {
+    const ids = products
+      .filter((p) =>
+        data.some((w) => w.name === p.name)
+      )
+      .map((p) => p.id);
+
+    setWishlist(ids);
+  }
+}
+
   useEffect(() => {
     loadProducts();
+    loadWishlist();
   }, []);
 
   async function loadProducts() {
     setLoading(true);
+
+    
 
     const { data, error } = await supabase
       .from("products")
@@ -42,6 +78,29 @@ export default function ProductsPage() {
 
     setLoading(false);
   }
+
+  async function addToCart(product: Product) {
+  const { error } = await supabase
+    .from("cart")
+    .insert([
+      {
+        product_id: product.id,
+        name: product.name,
+        price:
+          product.discount_price > 0
+            ? product.discount_price
+            : product.price,
+        image_url: product.image_url,
+        quantity: 1,
+      },
+    ]);
+
+  if (error) {
+    alert(error.message);
+  } else {
+    alert("🛒 Added to Cart");
+  }
+}
 
   const categories = [
     "All",
@@ -143,6 +202,12 @@ export default function ProductsPage() {
                 >
 
                   <div className="relative">
+                    <button
+  onClick={() => addToWishlist(p)}
+  className="absolute top-3 right-3 z-10 text-2xl"
+>
+  {wishlist.includes(p.id) ? "❤️" : "🤍"}
+</button>
                     <Image
                       src={
                         p.image_url ||
@@ -161,10 +226,10 @@ export default function ProductsPage() {
                     )}
 
                     {hasOffer && (
-                      <span className="absolute top-3 right-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold">
-                        {discount}% OFF
-                      </span>
-                    )}
+  <span className="absolute top-14 right-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold">
+    {discount}% OFF
+  </span>
+)}
                   </div>
 
                   <div className="p-5">
@@ -219,10 +284,17 @@ export default function ProductsPage() {
 
                       <button
                         className="flex-1 border border-yellow-500 text-yellow-400 py-3 rounded-xl hover:bg-yellow-500 hover:text-black transition"
-                        onClick={() => alert("Add to Cart Coming Soon")}
+                        onClick={() => addToCart(p)}
                       >
                         Add To Cart
                       </button>
+                      <button
+  onClick={() => addToWishlist(p)}
+  className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-3 rounded-xl transition"
+>
+  ❤️ Wishlist
+</button>
+  
 
                     </div>
 

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
 
 interface CartItem {
   id: number;
@@ -19,12 +21,24 @@ export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const items = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
+  loadCart();
+}, []);
 
-    setCart(items);
-  }, []);
+async function loadCart() {
+  const { data, error } = await supabase
+    .from("cart")
+    .select("*")
+    .order("id", { ascending: false });
+
+  if (!error && data) {
+    setCart(
+      data.map((item: any) => ({
+        ...item,
+        qty: item.quantity,
+      }))
+    );
+  }
+}
 
   function updateCart(items: CartItem[]) {
     setCart(items);
@@ -54,15 +68,35 @@ export default function CartPage() {
     updateCart(updated);
   }
 
-  function removeItem(id: number) {
-    updateCart(cart.filter((item) => item.id !== id));
+  async function removeItem(id: number) {
+  const { error } = await supabase
+    .from("cart")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
 
-  function clearCart() {
-    if (!confirm("Clear entire cart?")) return;
+  loadCart();
+}
 
-    updateCart([]);
+  async function clearCart() {
+  if (!confirm("Clear entire cart?")) return;
+
+  const { error } = await supabase
+    .from("cart")
+    .delete()
+    .gt("id", 0);
+
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  loadCart();
+}
 
   const totalItems = cart.reduce(
     (sum, item) => sum + item.qty,
