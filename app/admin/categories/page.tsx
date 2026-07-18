@@ -42,35 +42,52 @@ export default function AdminCategories() {
 
     setLoading(true);
 
-    const { error } = await supabase
-      .from("categories")
-      .insert([{ name }]);
+    try {
+      const response = await fetch("/api/admin/categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name }),
+      });
 
-    setLoading(false);
+      const payload = await response.json();
 
-    if (error) {
-      alert(error.message);
-      return;
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to save category.");
+      }
+
+      setName("");
+      await fetchCategories();
+    } catch (error: any) {
+      alert(error?.message || "Failed to save category.");
+    } finally {
+      setLoading(false);
     }
-
-    setName("");
-    void fetchCategories();
   }
 
   async function deleteCategory(id: number) {
     if (!confirm("Delete this category?")) return;
 
-    const { error } = await supabase
-      .from("categories")
-      .delete()
-      .eq("id", id);
+    try {
+      const response = await fetch("/api/admin/categories", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
 
-    if (error) {
-      alert(error.message);
-      return;
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Delete failed.");
+      }
+
+      await fetchCategories();
+    } catch (error: any) {
+      alert(error?.message || "Delete failed.");
     }
-
-    void fetchCategories();
   }
 
   const filteredCategories = categories.filter((c: any) =>
@@ -142,15 +159,24 @@ export default function AdminCategories() {
 
                     if (!newName) return;
 
-                    const { error } = await supabase
-                      .from("categories")
-                      .update({ name: newName })
-                      .eq("id", c.id);
+                    try {
+                      const response = await fetch("/api/admin/categories", {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ id: c.id, name: newName }),
+                      });
 
-                    if (error) {
-                      alert(error.message);
-                    } else {
-                      void fetchCategories();
+                      const payload = await response.json();
+
+                      if (!response.ok) {
+                        throw new Error(payload.error || "Update failed.");
+                      }
+
+                      await fetchCategories();
+                    } catch (error: any) {
+                      alert(error?.message || "Update failed.");
                     }
                   }}
                   className="text-blue-400 font-bold"

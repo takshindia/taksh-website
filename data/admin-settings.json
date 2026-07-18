@@ -1,0 +1,12 @@
+{
+  "id": 1,
+  "business_name": "तक्ष",
+  "logo": "https://example.com/logo.png",
+  "gst": "",
+  "phone": "9737664137",
+  "email": "taksh.support03@gmail.com",
+  "social_links": "https://www.instagram.com/taksh.in03?igsh=MW4zMWhrM3hpaDQ=",
+  "shipping_charge": 75,
+  "free_shipping_limit": 600,
+  "maintenance_mode": false
+}

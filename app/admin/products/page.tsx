@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import AdminLayout from "../../components/admin/AdminLayout";
 
 type Product = {
@@ -127,110 +126,60 @@ export default function AdminProducts() {
     }));
   }, [formData.name]);
 
-  async function uploadImage(file: File) {
-    
-    async function uploadImages(files: File[]) {
-  const urls: string[] = [];
-
-  for (const file of files) {
-    const url = await uploadImage(file);
-    urls.push(url);
-  }
-
-  return urls;
-}
-    const ext = file.name.split(".").pop();
-
-    const fileName =
-      Date.now() +
-      "-" +
-      Math.random().toString(36).substring(2) +
-      "." +
-      ext;
-
-    const { error } = await supabase.storage
-      .from("Products")
-      .upload(fileName, file);
-
-    if (error) throw error;
-
-    const { data } = supabase.storage
-      .from("Products")
-      .getPublicUrl(fileName);
-
-    return data.publicUrl;
-  }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     try {
       setSaving(true);
 
-      let imageUrl = "";
-let imageUrls: string[] = [];
-
-if (editingId) {
-  const current = products.find((p) => p.id === editingId);
-  imageUrl = current?.image_url || "";
-  imageUrls = current?.image_urls || [];
-}
-
-if (imageFiles.length > 0) {
-  imageUrls = await uploadImages(imageFiles);
-  async function uploadImages(files: File[]) {
-  const urls: string[] = [];
-
-  for (const file of files) {
-    const url = await uploadImage(file);
-    urls.push(url);
-  }
-
-  return urls;
-}
-  imageUrl = imageUrls[0];
-}
-
-      const payload = {
-        name: formData.name.trim(),
-        slug: formData.slug.trim(),
-        description: formData.description.trim(),
-        price: Number(formData.price),
-        discount_price:
-          formData.discount_price === ""
-            ? null
-            : Number(formData.discount_price),
-        sku: formData.sku.trim(),
-        stock: Number(formData.stock),
-        category_id:
-          formData.category_id === ""
-            ? null
-            : Number(formData.category_id),
-        featured: formData.featured,
-        image_url: imageUrl,
-        image_urls: imageUrls,
-      };
+      const form = new FormData();
+      form.append("name", formData.name.trim());
+      form.append("slug", formData.slug.trim());
+      form.append("description", formData.description.trim());
+      form.append("price", String(Number(formData.price)));
+      form.append(
+        "discount_price",
+        formData.discount_price === ""
+          ? ""
+          : String(Number(formData.discount_price))
+      );
+      form.append("sku", formData.sku.trim());
+      form.append("stock", String(Number(formData.stock)));
+      form.append(
+        "category_id",
+        formData.category_id === ""
+          ? ""
+          : String(Number(formData.category_id))
+      );
+      form.append("featured", String(formData.featured));
 
       if (editingId) {
-        const { error } = await supabase
-          .from("products")
-          .update(payload)
-          .eq("id", editingId);
-
-        if (error) throw error;
-
-        alert("✅ Product Updated Successfully");
-      } else {
-        const { error } = await supabase
-          .from("products")
-          .insert([payload]);
-
-        if (error) throw error;
-
-        alert("✅ Product Added Successfully");
+        form.append("id", String(editingId));
       }
 
+      imageFiles.forEach((file) => {
+        form.append("files", file);
+      });
+
+      const response = await fetch("/api/admin/products", {
+        method: editingId ? "PUT" : "POST",
+        body: form,
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Something went wrong.");
+      }
+
+      alert(
+        editingId
+          ? "✅ Product Updated Successfully"
+          : "✅ Product Added Successfully"
+      );
+
       resetForm();
-      fetchData();
+      await fetchData();
     } catch (err: any) {
       console.error(err);
       alert(err?.message || "Something went wrong.");
@@ -267,21 +216,26 @@ if (imageFiles.length > 0) {
   }
 
   async function deleteProduct(id: number) {
-    const ok = confirm(
-      "Are you sure you want to delete this product?"
-    );
+    const ok = confirm("Are you sure you want to delete this product?");
 
     if (!ok) return;
 
     try {
-      const { error } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", id);
+      const response = await fetch("/api/admin/products", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id }),
+      });
 
-      if (error) throw error;
+      const payload = await response.json();
 
-      fetchData();
+      if (!response.ok) {
+        throw new Error(payload.error || "Delete failed.");
+      }
+
+      await fetchData();
     } catch (err: any) {
       alert(err?.message || "Delete failed.");
     }

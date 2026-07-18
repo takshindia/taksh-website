@@ -9,51 +9,28 @@ const supabase = createClient(
 export async function GET() {
   try {
     const { data, error } = await supabase
-      .from("categories")
+      .from("reviews")
       .select("*")
-      .order("id", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ reviews: [] }, { status: 200 });
     }
 
-    return NextResponse.json({ categories: data || [] });
+    return NextResponse.json({ reviews: data || [] });
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Category query failed." },
-      { status: 500 }
-    );
+    return NextResponse.json({ reviews: [] }, { status: 200 });
   }
 }
 
-export async function POST(request: Request) {
+export async function PATCH(request: Request) {
   try {
     const body = await request.json();
-    const { name } = body;
-
-    const { error } = await supabase.from("categories").insert([{ name }]);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ ok: true });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error?.message || "Category create failed." },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: Request) {
-  try {
-    const body = await request.json();
-    const { id, name } = body;
+    const { id, status } = body;
 
     const { error } = await supabase
-      .from("categories")
-      .update({ name })
+      .from("reviews")
+      .update({ status })
       .eq("id", id);
 
     if (error) {
@@ -63,7 +40,7 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error?.message || "Category update failed." },
+      { error: error?.message || "Review update failed." },
       { status: 500 }
     );
   }
@@ -75,7 +52,7 @@ export async function DELETE(request: Request) {
     const { id } = body;
 
     const { error } = await supabase
-      .from("categories")
+      .from("reviews")
       .delete()
       .eq("id", id);
 
@@ -86,7 +63,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ ok: true });
   } catch (error: any) {
     return NextResponse.json(
-      { error: error?.message || "Category delete failed." },
+      { error: error?.message || "Review delete failed." },
       { status: 500 }
     );
   }

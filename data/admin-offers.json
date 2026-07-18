@@ -1,0 +1,29 @@
+[
+  {
+    "id": null,
+    "coupon_code": "VERIFY11",
+    "discount": 15,
+    "banner": "Runtime verification banner updated",
+    "start_date": "2026-07-17",
+    "end_date": "2026-07-25",
+    "status": "active"
+  },
+  {
+    "id": 1784380706139,
+    "coupon_code": "VERIFY10",
+    "discount": 15,
+    "banner": "Runtime verification banner",
+    "start_date": "2026-07-17",
+    "end_date": "2026-07-24",
+    "status": "active"
+  },
+  {
+    "id": 1784378592552,
+    "coupon_code": "RUNTIME10",
+    "discount": 10,
+    "banner": "Runtime Test Banner",
+    "start_date": "2026-07-18",
+    "end_date": "2026-08-18",
+    "status": "active"
+  }
+]

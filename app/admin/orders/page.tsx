@@ -51,13 +51,22 @@ export default function OrdersPage() {
     fetchOrders();
   }, []);
   async function updateStatus(id: string, status: string) {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status })
-      .eq("id", id);
+    try {
+      const response = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, status }),
+      });
 
-    if (!error) {
-      fetchOrders();
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Status update failed.");
+      }
+
+      await fetchOrders();
 
       if (selectedOrder?.id === id) {
         setSelectedOrder({
@@ -65,6 +74,8 @@ export default function OrdersPage() {
           status,
         });
       }
+    } catch (error: any) {
+      alert(error?.message || "Status update failed.");
     }
   }
 
