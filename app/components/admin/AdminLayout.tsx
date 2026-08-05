@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminLayout({
   children,
@@ -14,13 +14,14 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
-   const admin = localStorage.getItem("admin");
-  console.log("LAYOUT ADMIN =", admin);
-  
-if (admin !== "true") {
-  router.replace("/admin/login");
-}
+    const admin = localStorage.getItem("admin");
+
+    if (admin !== "true") {
+      router.replace("/admin/login");
+    }
   }, [router]);
+
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function logout() {
     localStorage.removeItem("admin");
@@ -40,8 +41,9 @@ if (admin !== "true") {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex">
-      <aside className="w-64 bg-[#111] border-r border-yellow-500/20 p-6">
+    <div className="min-h-screen bg-black text-white">
+      <div className="md:flex">
+        <aside className={`w-64 bg-[#111] border-r border-yellow-500/20 p-6 md:block ${mobileOpen ? "block" : "hidden"}`}>
 
         <div className="mb-8 flex flex-col items-center">
           <Image
@@ -80,11 +82,24 @@ if (admin !== "true") {
             🚪 Logout
           </button>
         </div>
-      </aside>
+        </aside>
 
-      <main className="flex-1 p-8 overflow-auto">
-        {children}
-      </main>
+        <main className="flex-1 p-6 md:p-8 overflow-auto">
+          <div className="flex items-center justify-between md:hidden mb-4">
+            <button
+              onClick={() => setMobileOpen((s) => !s)}
+              className="bg-yellow-500 text-black px-3 py-2 rounded"
+            >
+              {mobileOpen ? "Close" : "Menu"}
+            </button>
+            <div className="flex items-center gap-3">
+              <Image src="/taksh-logo.png" alt="TAKSH" width={100} height={40} className="object-contain" />
+            </div>
+          </div>
+
+          {children}
+        </main>
+      </div>
     </div>
   );
 }

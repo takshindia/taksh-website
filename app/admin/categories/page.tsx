@@ -147,9 +147,7 @@ export default function AdminCategories() {
                   {c.name}
                 </h3>
 
-                <p className="text-gray-400 text-sm">
-                  Category ID: {c.id}
-                </p>
+                <p className="text-gray-400 text-sm">&nbsp;</p>
               </div>
 
               <div className="flex gap-4">

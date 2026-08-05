@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
+import Image from "next/image";
 
 type Product = {
   id: number;
@@ -484,12 +485,9 @@ export default function AdminProducts() {
 
 <div className="flex flex-wrap gap-4 mt-4">
   {imageFiles.map((file, index) => (
-    <img
-      key={index}
-      src={URL.createObjectURL(file)}
-      alt={`Preview ${index + 1}`}
-      className="w-24 h-24 rounded-lg object-cover border border-yellow-500"
-    />
+    <div key={index} className="w-24 h-24 relative rounded-lg overflow-hidden border border-yellow-500">
+      <Image src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} fill className="object-cover" />
+    </div>
   ))}
 </div>
 
@@ -548,14 +546,14 @@ export default function AdminProducts() {
                 >
                   {/* Image */}
                   <div>
-                    <img
-                      src={
-                        product.image_url ||
-                        "https://via.placeholder.com/120x120?text=No+Image"
-                      }
-                      alt={product.name}
-                      className="w-28 h-28 object-cover rounded-lg border border-yellow-500"
-                    />
+                    <div className="w-28 h-28 relative">
+                      <Image
+                        src={product.image_url || "https://via.placeholder.com/120x120?text=No+Image"}
+                        alt={product.name}
+                        fill
+                        className="object-cover rounded-lg border border-yellow-500"
+                      />
+                    </div>
                   </div>
 
                   {/* Details */}

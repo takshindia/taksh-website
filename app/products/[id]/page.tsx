@@ -260,9 +260,9 @@ Please contact me.`);
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(350px,1fr))",
-            gap: "50px",
-            marginTop: "40px",
+            gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+            gap: "40px",
+            marginTop: "24px",
             alignItems: "center",
           }}
         >

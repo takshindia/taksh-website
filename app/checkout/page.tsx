@@ -219,8 +219,8 @@ export default function CheckoutPage() {
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-              gap: "40px",
+              gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+              gap: "28px",
             }}
           >
             <div
@@ -389,12 +389,12 @@ export default function CheckoutPage() {
                 Order Summary
               </h2>
 
-                <div style={{ marginBottom: 12 }}>
+                <div style={{ marginBottom: 12, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                   <input
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Have a coupon code?"
-                    style={{ width: "60%", background: "#111", color: "white", border: "1px solid #333", borderRadius: "8px", padding: "10px" }}
+                    style={{ flex: 1, minWidth: 0, background: "#111", color: "white", border: "1px solid #333", borderRadius: "8px", padding: "10px" }}
                   />
                   <button
                     onClick={async () => {
