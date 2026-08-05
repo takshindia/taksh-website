@@ -17,9 +17,32 @@ export const metadata: Metadata = {
   title: "तक्ष (TAKSH) | Premium Laser Engraving & Personalized Gifts",
   description:
     "Custom laser engraving, wooden gifts, metal engraving, jewellery customization and personalized gifts by तक्ष.",
-
   icons: {
     icon: "/favicon.png",
+  },
+  openGraph: {
+    title: "तक्ष (TAKSH) | Premium Laser Engraving & Personalized Gifts",
+    description:
+      "Custom laser engraving, wooden gifts, metal engraving, jewellery customization and personalized gifts by तक्ष.",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://example.com",
+    siteName: "तक्ष (TAKSH)",
+    images: [
+      {
+        url: "/taksh-logo.png",
+        width: 800,
+        height: 600,
+        alt: "तक्ष (TAKSH) Logo",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "तक्ष (TAKSH)",
+    description:
+      "Custom laser engraving and personalized gifts from तक्ष.",
+    images: ["/taksh-logo.png"],
   },
 };
 

@@ -13,13 +13,14 @@ interface CartItem {
   qty: number;
 }
 
+const CART_KEY = "taksh_cart";
+
 export default function CheckoutPage() {
   const router = useRouter();
 
   const [cart, setCart] = useState<CartItem[]>([]);
-
   const [addresses, setAddresses] = useState<any[]>([]);
-  const [selectedAddress, setSelectedAddress] = useState("");
+  const [selectedAddress, setSelectedAddress] = useState<number | null>(null);
 
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -29,101 +30,80 @@ export default function CheckoutPage() {
   const [pincode, setPincode] = useState("");
 
   const [loading, setLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
-    
-
     async function loadAddresses() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  if (!user) return;
+      if (user?.email) {
+        setEmail(user.email);
+      }
 
-  const { data } = await supabase
-    .from("addresses")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+      if (!user) return;
 
-  if (data) {
-    setAddresses(data);
+      const { data } = await supabase
+        .from("addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
-    if (data.length > 0) {
-      const a = data[0];
-
-      setSelectedAddress(a.id);
-
-      setName(a.full_name || "");
-      setMobile(a.phone || "");
-      setAddress(
-        `${a.address_line1} ${a.address_line2 || ""}`.trim()
-      );
-      setCity(a.city || "");
-      setPincode(a.pincode || "");
+      if (data && data.length > 0) {
+        setAddresses(data);
+        const a = data[0];
+        setSelectedAddress(a.id);
+        setName(a.full_name || "");
+        setMobile(a.phone || "");
+        setAddress(`${a.address_line1} ${a.address_line2 || ""}`.trim());
+        setCity(a.city || "");
+        setPincode(a.pincode || "");
+      }
     }
-  }
-}
 
-    async function loadCart() {
-  const { data, error } = await supabase
-    .from("cart")
-    .select("*")
-    .order("id", { ascending: false });
+    function loadCart() {
+      const saved = localStorage.getItem(CART_KEY);
+      const items = saved ? (JSON.parse(saved) as CartItem[]) : [];
+      setCart(items);
+    }
 
-  if (!error && data) {
-    const items = data.map((item: any) => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image_url: item.image_url,
-      qty: item.quantity,
-    }));
-
-    setCart(items);
-  }
-}
     loadCart();
     loadAddresses();
-
   }, []);
-
-  
-  
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
   );
 
-  const totalQty = cart.reduce(
-    (sum, item) => sum + item.qty,
-    0
-  );
+  const discountedAmount = appliedCoupon
+    ? Math.max(0, Math.round(totalAmount * (1 - appliedCoupon.discount / 100)))
+    : totalAmount;
+
+  const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
   async function placeOrder() {
+    const selected = addresses.find((a) => a.id === selectedAddress);
 
-    const selected = addresses.find(
-  (a) => a.id === selectedAddress
-);
-
-if (selected) {
-  setName(selected.full_name || "");
-  setMobile(selected.phone || "");
-  setAddress(
-    `${selected.address_line1} ${selected.address_line2 || ""}`.trim()
-  );
-  setCity(selected.city || "");
-  setPincode(selected.pincode || "");
-}
+    const orderName = selected?.full_name || name;
+    const orderMobile = selected?.phone || mobile;
+    const orderAddress = selected?.address_line1
+      ? `${selected.address_line1} ${selected.address_line2 || ""}`.trim()
+      : address;
+    const orderCity = selected?.city || city;
+    const orderPincode = selected?.pincode || pincode;
+    const orderEmail = email;
 
     if (
-      !name ||
-      !mobile ||
-      !email ||
-      !address ||
-      !city ||
-      !pincode
+      !orderName ||
+      !orderMobile ||
+      !orderEmail ||
+      !orderAddress ||
+      !orderCity ||
+      !orderPincode
     ) {
       alert("Please fill all details.");
       return;
@@ -143,29 +123,21 @@ if (selected) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: totalAmount,
-        }),
+            amount: discountedAmount,
+          }),
       });
 
       const order = await res.json();
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-
         amount: order.amount,
-
         currency: order.currency,
-
         name: "तक्ष (TAKSH)",
-
         description: "Premium Personalized Order",
-
         order_id: order.id,
-
         handler: async function (response: any) {
-          const productNames = cart
-            .map((item) => item.name)
-            .join(", ");
+          const productNames = cart.map((item) => item.name).join(", ");
 
           await fetch("/api/save-order", {
             method: "POST",
@@ -173,61 +145,45 @@ if (selected) {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              customer_name: name,
-              mobile,
-              email,
-              address,
-              city,
-              pincode,
-
+              customer_name: orderName,
+              mobile: orderMobile,
+              email: orderEmail,
+              address: orderAddress,
+              city: orderCity,
+              pincode: orderPincode,
               product_name: productNames,
-
               quantity: totalQty,
-
-              amount: totalAmount,
-
+                    amount: discountedAmount,
+                    original_amount: totalAmount,
+                    coupon_code: appliedCoupon?.code || null,
+                    coupon_discount: appliedCoupon?.discount || 0,
               payment_status: "Paid",
-
               status: "Pending",
-
               razorpay_order_id: order.id,
-
-              razorpay_payment_id:
-                response.razorpay_payment_id,
+              razorpay_payment_id: response.razorpay_payment_id,
             }),
           });
 
-          await supabase
-  .from("cart")
-  .delete()
-  .gt("id", 0);
-
+          localStorage.removeItem(CART_KEY);
           alert("✅ Payment Successful");
-
           router.push("/order-success");
         },
-
         prefill: {
-          name,
-          email,
-          contact: mobile,
+          name: orderName,
+          email: orderEmail,
+          contact: orderMobile,
         },
-
         theme: {
           color: "#d4af37",
         },
       };
 
       const razor = new (window as any).Razorpay(options);
-
       razor.open();
-
       setLoading(false);
-      } catch (err) {
+    } catch (err) {
       console.error(err);
-
       setLoading(false);
-
       alert("Something went wrong.");
     }
   }
@@ -275,132 +231,153 @@ if (selected) {
               }}
             >
               {addresses.length > 0 && (
-  <div
-    style={{
-      background: "#151515",
-      padding: "15px",
-      borderRadius: "12px",
-      marginBottom: "20px",
-    }}
-  >
-    <h3
-      style={{
-        color: "#d4af37",
-        marginBottom: "15px",
-      }}
-    >
-      Saved Addresses
-    </h3>
+                <div
+                  style={{
+                    background: "#151515",
+                    padding: "15px",
+                    borderRadius: "12px",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <h3
+                    style={{
+                      color: "#d4af37",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    Saved Addresses
+                  </h3>
 
-    {addresses.map((item) => (
-      <label
-        key={item.id}
-        style={{
-          display: "block",
-          padding: "12px",
-          marginBottom: "10px",
-          border:
-            selectedAddress === item.id
-              ? "2px solid #d4af37"
-              : "1px solid #333",
-          borderRadius: "10px",
-          cursor: "pointer",
-        }}
-      >
-        <input
-          type="radio"
-          checked={selectedAddress === item.id}
-          onChange={() => {
-            setSelectedAddress(item.id);
+                  {addresses.map((item) => (
+                    <label
+                      key={item.id}
+                      style={{
+                        display: "block",
+                        padding: "12px",
+                        marginBottom: "10px",
+                        border:
+                          selectedAddress === item.id
+                            ? "2px solid #d4af37"
+                            : "1px solid #333",
+                        borderRadius: "10px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        checked={selectedAddress === item.id}
+                        onChange={() => {
+                          setSelectedAddress(item.id);
+                          setName(item.full_name || "");
+                          setMobile(item.phone || "");
+                          setAddress(
+                            `${item.address_line1} ${item.address_line2 || ""}`.trim()
+                          );
+                          setCity(item.city || "");
+                          setPincode(item.pincode || "");
+                        }}
+                      />
+                      <span style={{ marginLeft: "10px" }}>
+                        {item.full_name}, {item.phone}
+                        <br />
+                        {item.address_line1} {item.address_line2}
+                        <br />
+                        {item.city} – {item.pincode}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              )}
 
-            setName(item.full_name || "");
-            setMobile(item.phone || "");
-            setAddress(
-              `${item.address_line1} ${item.address_line2 || ""}`.trim()
-            );
-            setCity(item.city || "");
-            setPincode(item.pincode || "");
-          }}
-        />
-
-        <div style={{ marginTop: "8px" }}>
-          <strong>{item.full_name}</strong>
-
-          <p>{item.phone}</p>
-
-          <p>
-            {item.address_line1}{" "}
-            {item.address_line2}
-          </p>
-
-          <p>
-            {item.city}, {item.state} - {item.pincode}
-          </p>
-        </div>
-      </label>
-    ))}
-
-    <button
-      type="button"
-      onClick={() => router.push("/addresses/new")}
-      style={{
-        marginTop: "10px",
-        background: "#d4af37",
-        color: "#000",
-        border: "none",
-        padding: "10px 15px",
-        borderRadius: "8px",
-        cursor: "pointer",
-        fontWeight: "bold",
-      }}
-    >
-      + Add New Address
-    </button>
-  </div>
-)}
-              <input
-                placeholder="Full Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-
-              <input
-                placeholder="Mobile Number"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value)}
-              />
-
-              <textarea
-                placeholder="Full Address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                rows={4}
-              />
-
-              <input
-                placeholder="City"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-              />
-
-              <input
-                placeholder="Pincode"
-                value={pincode}
-                onChange={(e) => setPincode(e.target.value)}
-              />
+              <div
+                style={{
+                  display: "grid",
+                  gap: "15px",
+                }}
+              >
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Full name"
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                  }}
+                />
+                <input
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value)}
+                  placeholder="Mobile number"
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                  }}
+                />
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                  }}
+                />
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Address"
+                  rows={4}
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                    resize: "vertical",
+                  }}
+                />
+                <input
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="City"
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                  }}
+                />
+                <input
+                  value={pincode}
+                  onChange={(e) => setPincode(e.target.value)}
+                  placeholder="Pincode"
+                  style={{
+                    background: "#111",
+                    color: "white",
+                    border: "1px solid #333",
+                    borderRadius: "12px",
+                    padding: "15px",
+                  }}
+                />
+              </div>
             </div>
-            <div
+
+              <div
               style={{
                 background: "#151515",
                 padding: "25px",
-                borderRadius: "15px",
+                borderRadius: "20px",
+                border: "1px solid rgba(212,175,55,.15)",
               }}
             >
               <h2
@@ -412,63 +389,95 @@ if (selected) {
                 Order Summary
               </h2>
 
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "12px",
-                  }}
-                >
-                  <span>
-                    {item.name} × {item.qty}
-                  </span>
+                <div style={{ marginBottom: 12 }}>
+                  <input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Have a coupon code?"
+                    style={{ width: "60%", background: "#111", color: "white", border: "1px solid #333", borderRadius: "8px", padding: "10px" }}
+                  />
+                  <button
+                    onClick={async () => {
+                      setCouponError("");
+                      if (!couponCode.trim()) {
+                        setCouponError("Enter a coupon code.");
+                        return;
+                      }
 
-                  <strong>
-                    ₹{item.price * item.qty}
-                  </strong>
+                      try {
+                        const res = await fetch(`/api/validate-coupon`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ code: couponCode.trim() }),
+                        });
+
+                        const json = await res.json();
+
+                        if (!json.ok) {
+                          setCouponError(json.error || "Invalid coupon code.");
+                          setAppliedCoupon(null);
+                          return;
+                        }
+
+                        const found = json.coupon;
+                        setAppliedCoupon({ code: found.coupon_code, discount: Number(found.discount || 0) });
+                      } catch (err) {
+                        console.error(err);
+                        setCouponError("Could not validate coupon. Try again.");
+                      }
+                    }}
+                    style={{ marginLeft: 8, background: "#d4af37", color: "#111", padding: "10px 12px", borderRadius: 8, fontWeight: "bold" }}
+                  >
+                    Apply
+                  </button>
+                  {couponError && <div style={{ color: "#f87171", marginTop: 8 }}>{couponError}</div>}
+                  {appliedCoupon && <div style={{ color: "#22c55e", marginTop: 8 }}>Applied {appliedCoupon.code} — {appliedCoupon.discount}% off</div>}
                 </div>
-              ))}
 
-              <hr
+              <div
                 style={{
-                  margin: "20px 0",
-                  borderColor: "#333",
-                }}
-              />
-
-              <h3>Total Items: {totalQty}</h3>
-
-              <h2
-                style={{
-                  color: "#d4af37",
-                  marginTop: "10px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "15px",
                 }}
               >
-                Total: ₹{totalAmount}
-              </h2>
+                <span>Items</span>
+                <span>{totalQty}</span>
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: "25px",
+                }}
+              >
+                <span>Total</span>
+                <strong
+                  style={{
+                    color: "#d4af37",
+                    fontSize: "24px",
+                  }}
+                >
+                  ₹{totalAmount}
+                </strong>
+              </div>
 
               <button
                 onClick={placeOrder}
                 disabled={loading}
                 style={{
                   width: "100%",
-                  marginTop: "25px",
                   background: "#d4af37",
-                  color: "#000",
+                  color: "#111",
                   border: "none",
-                  padding: "15px",
-                  borderRadius: "10px",
-                  cursor: "pointer",
+                  padding: "18px",
+                  borderRadius: "14px",
                   fontWeight: "bold",
-                  fontSize: "16px",
-                  opacity: loading ? 0.7 : 1,
+                  cursor: "pointer",
                 }}
               >
-                {loading
-                  ? "Processing Payment..."
-                  : "Continue To Payment"}
+                {loading ? "Processing..." : "Pay with Razorpay"}
               </button>
             </div>
           </div>

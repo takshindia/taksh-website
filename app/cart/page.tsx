@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-
 
 interface CartItem {
   id: number;
@@ -15,94 +13,54 @@ interface CartItem {
   qty: number;
 }
 
+const CART_KEY = "taksh_cart";
+
 export default function CartPage() {
   const router = useRouter();
-
   const [cart, setCart] = useState<CartItem[]>([]);
 
   useEffect(() => {
-  loadCart();
-}, []);
+    loadCart();
+  }, []);
 
-async function loadCart() {
-  const { data, error } = await supabase
-    .from("cart")
-    .select("*")
-    .order("id", { ascending: false });
-
-  if (!error && data) {
-    setCart(
-      data.map((item: any) => ({
-        ...item,
-        qty: item.quantity,
-      }))
-    );
+  function loadCart() {
+    const saved = localStorage.getItem(CART_KEY);
+    const items = saved ? (JSON.parse(saved) as CartItem[]) : [];
+    setCart(items);
   }
-}
 
   function updateCart(items: CartItem[]) {
     setCart(items);
-    localStorage.setItem("cart", JSON.stringify(items));
+    localStorage.setItem(CART_KEY, JSON.stringify(items));
   }
 
   function increaseQty(id: number) {
     const updated = cart.map((item) =>
-      item.id === id
-        ? { ...item, qty: item.qty + 1 }
-        : item
+      item.id === id ? { ...item, qty: item.qty + 1 } : item
     );
-
     updateCart(updated);
   }
 
   function decreaseQty(id: number) {
     const updated = cart.map((item) =>
       item.id === id
-        ? {
-            ...item,
-            qty: Math.max(1, item.qty - 1),
-          }
+        ? { ...item, qty: Math.max(1, item.qty - 1) }
         : item
     );
-
     updateCart(updated);
   }
 
-  async function removeItem(id: number) {
-  const { error } = await supabase
-    .from("cart")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    alert(error.message);
-    return;
+  function removeItem(id: number) {
+    const updated = cart.filter((item) => item.id !== id);
+    updateCart(updated);
   }
 
-  loadCart();
-}
-
-  async function clearCart() {
-  if (!confirm("Clear entire cart?")) return;
-
-  const { error } = await supabase
-    .from("cart")
-    .delete()
-    .gt("id", 0);
-
-  if (error) {
-    alert(error.message);
-    return;
+  function clearCart() {
+    if (!confirm("Clear entire cart?")) return;
+    updateCart([]);
   }
 
-  loadCart();
-}
-
-  const totalItems = cart.reduce(
-    (sum, item) => sum + item.qty,
-    0
-  );
-
+  const totalItems = cart.reduce((sum, item) => sum + item.qty, 0);
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
@@ -213,17 +171,9 @@ async function loadCart() {
                 />
 
                 <div style={{ flex: 1 }}>
-                  <h2 style={{ marginBottom: "10px" }}>
-                    {item.name}
-                  </h2>
+                  <h2 style={{ marginBottom: "10px" }}>{item.name}</h2>
 
-                  <h3
-                    style={{
-                      color: "#d4af37",
-                    }}
-                  >
-                    ₹ {item.price}
-                  </h3>
+                  <h3 style={{ color: "#d4af37" }}>₹ {item.price}</h3>
 
                   <div
                     style={{
@@ -233,15 +183,9 @@ async function loadCart() {
                       marginTop: "15px",
                     }}
                   >
-                    <button onClick={() => decreaseQty(item.id)}>
-                      −
-                    </button>
-
+                    <button onClick={() => decreaseQty(item.id)}>−</button>
                     <strong>{item.qty}</strong>
-
-                    <button onClick={() => increaseQty(item.id)}>
-                      +
-                    </button>
+                    <button onClick={() => increaseQty(item.id)}>+</button>
                   </div>
                 </div>
 

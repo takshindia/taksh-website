@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import EmptyState from "@/app/components/ui/EmptyState";
 
 interface Order {
   id: string;
@@ -64,17 +65,17 @@ return (
         </p>
 
         {loading ? (
-          <p>Loading...</p>
-        ) : orders.length === 0 ? (
-          <div className="rounded-2xl border border-yellow-500/20 bg-[#111] p-8 text-center">
-            <h2 className="text-2xl font-bold text-yellow-400">
-              No Orders Found
-            </h2>
-
-            <p className="mt-3 text-gray-400">
-              You haven't placed any orders yet.
-            </p>
+          <div className="space-y-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded-2xl border border-yellow-500/20 bg-[#111] p-6">
+                <div className="h-6 w-1/2 bg-[#111] animate-pulse mb-4" />
+                <div className="h-4 bg-[#111] animate-pulse mb-2" />
+                <div className="h-4 bg-[#111] animate-pulse" />
+              </div>
+            ))}
           </div>
+        ) : orders.length === 0 ? (
+          <EmptyState title="No Orders Found" message="You haven't placed any orders yet." action={{ href: "/products", label: "Shop Now" }} />
         ) : (
           <div className="space-y-6">
             {orders.map((order) => (
@@ -120,6 +121,14 @@ return (
                     <span className="font-semibold text-white">Order Date:</span>{" "}
                     {new Date(order.created_at).toLocaleString()}
                   </p>
+                  <div className="mt-4">
+                    <a
+                      href={`/orders/${order.id}`}
+                      className="inline-block rounded-xl bg-yellow-500 px-4 py-2 font-semibold text-black hover:bg-yellow-400"
+                    >
+                      View Details
+                    </a>
+                  </div>
                 </div>
               </div>
             ))}

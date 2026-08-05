@@ -1,20 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { decodeId, encodeId } from "@/lib/utils";
+
+interface Review {
+  id: number;
+  product_id: number;
+  customer_name: string;
+  rating: number;
+  review: string;
+  created_at: string;
+}
 
 export default function ProductDetailsPage() {
   const params = useParams();
   const router = useRouter();
-
   const id = params.id;
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState(5);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewError, setReviewError] = useState("");
+  const [quantity, setQuantity] = useState(1);
+
+  const averageRating = useMemo(() => {
+    if (!reviews.length) return "0.0";
+    const total = reviews.reduce((sum, item) => sum + item.rating, 0);
+    return (total / reviews.length).toFixed(1);
+  }, [reviews]);
 
   useEffect(() => {
     if (id) {
@@ -25,10 +49,12 @@ export default function ProductDetailsPage() {
   async function fetchProduct() {
     setLoading(true);
 
+    const internalId = decodeId(id as string);
+
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .eq("id", id)
+      .eq("id", Number(internalId))
       .single();
 
     if (error) {
@@ -38,28 +64,97 @@ export default function ProductDetailsPage() {
     }
 
     setProduct(data);
+    await fetchReviews(data.id);
 
     const { data: related } = await supabase
       .from("products")
       .select("*")
-      .neq("id", id)
+      .neq("id", Number(internalId))
       .limit(4);
 
     setRelatedProducts(related || []);
-
     setLoading(false);
+  }
+
+  async function fetchReviews(productId: number) {
+    setReviewLoading(true);
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("*")
+      .eq("product_id", productId)
+      .eq("status", "approved")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setReviews(data || []);
+    }
+
+    setReviewLoading(false);
+  }
+
+  async function submitReview() {
+    if (!customerName.trim() || !reviewText.trim()) {
+      setReviewError("Please enter your name and a review.");
+      return;
+    }
+
+    try {
+      setReviewError("");
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      const email = user?.email;
+
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          product_id: product.id,
+          customer_name: customerName.trim(),
+          rating,
+          review: reviewText.trim(),
+          email,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!json.ok) {
+        setReviewError(json.error || "Could not submit your review.");
+        return;
+      }
+
+      setCustomerName("");
+      setReviewText("");
+      setRating(5);
+      setReviewSubmitted(true);
+    } catch (err) {
+      console.error(err);
+      setReviewError("Could not submit your review. Please try again.");
+    }
   }
 
   function addToCart() {
     if (!product) return;
+    if (product.stock === 0) {
+      alert("This product is out of stock.");
+      return;
+    }
 
-    let cart = JSON.parse(
-      localStorage.getItem("cart") || "[]"
-    );
+    const saved = localStorage.getItem("taksh_cart");
+    const cart = saved ? (JSON.parse(saved) as any[]) : [];
 
-    const index = cart.findIndex(
-      (item: any) => item.id === product.id
-    );
+    const finalPrice =
+      product.discount_price && product.discount_price > 0
+        ? product.discount_price
+        : product.price;
+
+    const index = cart.findIndex((item: any) => item.id === product.id);
 
     if (index >= 0) {
       cart[index].qty += quantity;
@@ -67,17 +162,16 @@ export default function ProductDetailsPage() {
       cart.push({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: finalPrice,
         image_url: product.image_url,
         qty: quantity,
       });
     }
 
-    localStorage.setItem("cart", JSON.stringify(cart));
-
+    localStorage.setItem("taksh_cart", JSON.stringify(cart));
     alert("✅ Product Added To Cart");
   }
-  const [quantity, setQuantity] = useState(1);
+
   function buyNow() {
     addToCart();
     router.push("/checkout");
@@ -173,11 +267,8 @@ Please contact me.`);
           }}
         >
           <Image
-          priority
-            src={
-              product.image_url ||
-              "https://via.placeholder.com/600x600"
-            }
+            priority
+            src={product.image_url || "https://via.placeholder.com/600x600"}
             alt={product.name}
             width={500}
             height={500}
@@ -199,15 +290,24 @@ Please contact me.`);
             >
               {product.name}
             </h1>
-<div
-  style={{
-    color: "#facc15",
-    fontSize: "18px",
-    marginBottom: "15px",
-  }}
->
-  ⭐⭐⭐⭐⭐ (4.9) • 327 Reviews
-</div>
+            <div
+              style={{
+                color: "#facc15",
+                fontSize: "18px",
+                marginBottom: "15px",
+              }}
+            >
+              {reviews.length > 0 ? (
+                <>
+                  {"⭐".repeat(Math.round(Number(averageRating)))}
+                  {"☆".repeat(5 - Math.round(Number(averageRating)))}
+                  {" "}
+                  ({averageRating}) • {reviews.length} Reviews
+                </>
+              ) : (
+                <>☆☆☆☆☆ (0.0) • 0 Reviews</>
+              )}
+            </div>
             <h2
               style={{
                 fontSize: "34px",
@@ -216,17 +316,19 @@ Please contact me.`);
             >
               ₹ {product.price}
             </h2>
-<p
-  style={{
-    color: product.stock > 0 ? "#22c55e" : "#ef4444",
-    fontWeight: "bold",
-    marginBottom: "20px",
-  }}
->
-  {product.stock > 0
-    ? `✅ In Stock (${product.stock})`
-    : "❌ Out of Stock"}
-</p>
+            <p
+              style={{
+                color: product.stock > 0 ? "#22c55e" : "#ef4444",
+                fontWeight: "bold",
+                marginBottom: "20px",
+              }}
+            >
+              {product.stock > 0
+                ? product.stock <= 5
+                  ? `⚠️ Low Stock (${product.stock})`
+                  : `✅ In Stock (${product.stock})`
+                : "❌ Out of Stock"}
+            </p>
             <p
               style={{
                 color: "#cccccc",
@@ -234,24 +336,23 @@ Please contact me.`);
                 fontSize: "18px",
               }}
             >
-              {product.description ||
-                "Premium personalized product from तक्ष."}
+              {product.description || "Premium personalized product from तक्ष."}
             </p>
             <div
-  style={{
-    marginTop: "20px",
-    color: "#ccc",
-    lineHeight: "32px",
-  }}
->
-  🚚 Delivery in 3-7 Days
-  <br />
-  🔒 Secure Payment
-  <br />
-  🔄 Easy Replacement
-  <br />
-  🇮🇳 Made in India
-</div>
+              style={{
+                marginTop: "20px",
+                color: "#ccc",
+                lineHeight: "32px",
+              }}
+            >
+              🚚 Delivery in 3-7 Days
+              <br />
+              🔒 Secure Payment
+              <br />
+              🔄 Easy Replacement
+              <br />
+              🇮🇳 Made in India
+            </div>
             <div
               style={{
                 display: "grid",
@@ -259,177 +360,268 @@ Please contact me.`);
                 marginTop: "25px",
               }}
             >
-          
+              <div
+                style={{
+                  display: "grid",
+                  gap: "5px",
+                  marginTop: "5px",
+                }}
+              >
                 <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "3px",
-    marginBottom: "5px",
-  }}
->
- 
-</div>
+                  style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: "20px",
+                    margin: "20px 0",
+                  }}
+                >
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      border: "none",
+                      background: "#d4af37",
+                      color: "#111",
+                      fontSize: "22px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    −
+                  </button>
 
+                  <span
+                    style={{
+                      fontSize: "22px",
+                      fontWeight: "bold",
+                      minWidth: "30px",
+                      textAlign: "center",
+                    }}
+                  >
+                    {quantity}
+                  </span>
+
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      border: "none",
+                      background: "#d4af37",
+                      color: "#111",
+                      fontSize: "22px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <button
+                  onClick={addToCart}
+                  disabled={product.stock === 0}
+                  aria-disabled={product.stock === 0}
+                  style={{
+                    padding: "16px",
+                    background: product.stock === 0 ? "#444" : "#d4af37",
+                    color: "#111",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: product.stock === 0 ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                  }}
+                >
+                  🛒 Add To Cart
+                </button>
+
+                <button
+                  onClick={buyNow}
+                  disabled={product.stock === 0}
+                  aria-disabled={product.stock === 0}
+                  style={{
+                    padding: "16px",
+                    background: product.stock === 0 ? "#222" : "#222",
+                    color: "#fff",
+                    border: product.stock === 0 ? "1px solid #333" : "1px solid #d4af37",
+                    borderRadius: "12px",
+                    cursor: product.stock === 0 ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                  }}
+                >
+                  ⚡ Buy Now
+                </button>
+
+                <button
+                  onClick={whatsappOrder}
+                  style={{
+                    padding: "16px",
+                    background: "#25D366",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "18px",
+                  }}
+                >
+                  💬 Order on WhatsApp
+                </button>
+              </div>
 
               <div
-  style={{
-    display: "flex",
-    alignItems: "center",
-    gap: "3px",
-    marginBottom: "5px",
-  }}
->
-  
-</div>
-
-<div
-  style={{
-    display: "grid",
-    gap: "5px",
-    marginTop: "5px",
-  }}
->
-  <div
-  style={{
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "20px",
-    margin: "20px 0",
-  }}
->
-  <button
-    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-    style={{
-      width: "40px",
-      height: "40px",
-      borderRadius: "50%",
-      border: "none",
-      background: "#d4af37",
-      color: "#111",
-      fontSize: "22px",
-      cursor: "pointer",
-    }}
-  >
-    −
-  </button>
-
-  <span
-    style={{
-      fontSize: "22px",
-      fontWeight: "bold",
-      minWidth: "30px",
-      textAlign: "center",
-    }}
-  >
-    {quantity}
-  </span>
-
-  <button
-    onClick={() => setQuantity(quantity + 1)}
-    style={{
-      width: "40px",
-      height: "40px",
-      borderRadius: "50%",
-      border: "none",
-      background: "#d4af37",
-      color: "#111",
-      fontSize: "22px",
-      cursor: "pointer",
-    }}
-  >
-    +
-  </button>
-</div>
-
-  <button
-    onClick={addToCart}
-    style={{
-      padding: "16px",
-      background: "#d4af37",
-      color: "#111",
-      border: "none",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: "bold",
-      fontSize: "18px",
-    }}
-  >
-    🛒 Add To Cart
-  </button>
-
-  <button
-    onClick={buyNow}
-    style={{
-      padding: "16px",
-      background: "#222",
-      color: "#fff",
-      border: "1px solid #d4af37",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: "bold",
-      fontSize: "18px",
-    }}
-  >
-    ⚡ Buy Now
-  </button>
-
-  <button
-    onClick={whatsappOrder}
-    style={{
-      padding: "16px",
-      background: "#25D366",
-      color: "#fff",
-      border: "none",
-      borderRadius: "12px",
-      cursor: "pointer",
-      fontWeight: "bold",
-      fontSize: "18px",
-    }}
-  >
-    💬 Order on WhatsApp
-  </button>
-</div>
-
-              
-            </div>
-
-            <div
-              style={{
-                marginTop: "40px",
-                background: "#151515",
-                padding: "22px",
-                borderRadius: "16px",
-                border: "1px solid rgba(212,175,55,.2)",
-              }}
-            >
-              <h3
                 style={{
-                  color: "#d4af37",
-                  marginBottom: "18px",
+                  marginTop: "40px",
+                  background: "#151515",
+                  padding: "22px",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(212,175,55,.2)",
                 }}
               >
-                Why Choose तक्ष?
-              </h3>
+                <h3
+                  style={{
+                    color: "#d4af37",
+                    marginBottom: "18px",
+                  }}
+                >
+                  Customer Reviews
+                </h3>
 
-              <ul
-                style={{
-                  color: "#ddd",
-                  lineHeight: "32px",
-                  paddingLeft: "20px",
-                }}
-              >
-                <li>✅ Premium Quality Materials</li>
-                <li>✅ Precision Laser Engraving</li>
-                <li>✅ Personalized Designs</li>
-                <li>✅ Secure Online Payment</li>
-                <li>✅ Fast Shipping Across India</li>
-                <li>✅ Friendly Customer Support</li>
-              </ul>
+                {reviewLoading ? (
+                  <p style={{ color: "#ccc" }}>Loading reviews...</p>
+                ) : reviews.length === 0 ? (
+                  <p style={{ color: "#aaa" }}>No reviews yet.</p>
+                ) : (
+                  <div style={{ display: "grid", gap: "18px" }}>
+                    {reviews.map((review) => (
+                      <div
+                        key={review.id}
+                        style={{
+                          background: "#111",
+                          borderRadius: "16px",
+                          padding: "18px",
+                          border: "1px solid rgba(255,255,255,.08)",
+                        }}
+                      >
+                        <div style={{ marginBottom: "10px", color: "#facc15" }}>
+                          {"★".repeat(review.rating)}
+                          {"☆".repeat(5 - review.rating)}
+                        </div>
+                        <p style={{ color: "#fff", fontWeight: "bold" }}>
+                          {review.customer_name}
+                        </p>
+                        <p style={{ color: "#ccc", marginTop: "10px" }}>
+                          {review.review}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ marginTop: "28px" }}>
+                  <h4 style={{ color: "#facc15", marginBottom: "12px" }}>
+                    Add Your Review
+                  </h4>
+                  {reviewSubmitted && (
+                    <div style={{ marginBottom: "16px", color: "#22c55e" }}>
+                      Thank you! Your review was submitted and will appear once approved.
+                    </div>
+                  )}
+                  {reviewError && (
+                    <div style={{ marginBottom: "16px", color: "#f87171" }}>
+                      {reviewError}
+                    </div>
+                  )}
+                  <input
+                    value={customerName}
+                    onChange={(e) => {
+                      setReviewSubmitted(false);
+                      setReviewError("");
+                      setCustomerName(e.target.value);
+                    }}
+                    placeholder="Your name"
+                    style={{
+                      width: "100%",
+                      background: "#111",
+                      border: "1px solid #333",
+                      borderRadius: "12px",
+                      padding: "14px",
+                      color: "white",
+                      marginBottom: "12px",
+                    }}
+                  />
+                  <textarea
+                    value={reviewText}
+                    onChange={(e) => {
+                      setReviewSubmitted(false);
+                      setReviewError("");
+                      setReviewText(e.target.value);
+                    }}
+                    placeholder="Write your review..."
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      background: "#111",
+                      border: "1px solid #333",
+                      borderRadius: "12px",
+                      padding: "14px",
+                      color: "white",
+                      marginBottom: "12px",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "18px",
+                    }}
+                  >
+                    <span style={{ color: "#ccc" }}>Rating:</span>
+                    <select
+                      value={rating}
+                      onChange={(e) => setRating(Number(e.target.value))}
+                      style={{
+                        background: "#111",
+                        border: "1px solid #333",
+                        borderRadius: "12px",
+                        padding: "12px",
+                        color: "white",
+                      }}
+                    >
+                      {[5, 4, 3, 2, 1].map((value) => (
+                        <option key={value} value={value}>
+                          {value} Star{value > 1 ? "s" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={submitReview}
+                    style={{
+                      width: "100%",
+                      background: "#d4af37",
+                      color: "#111",
+                      border: "none",
+                      padding: "16px",
+                      borderRadius: "14px",
+                      fontWeight: "bold",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Submit Review
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+
         {relatedProducts.length > 0 && (
           <div style={{ marginTop: "70px" }}>
             <h2
@@ -441,12 +633,10 @@ Please contact me.`);
             >
               Related Products
             </h2>
-
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit,minmax(240px,1fr))",
+                gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
                 gap: "25px",
               }}
             >
@@ -461,11 +651,8 @@ Please contact me.`);
                   }}
                 >
                   <Image
-                  priority
-                    src={
-                      item.image_url ||
-                      "https://via.placeholder.com/400"
-                    }
+                    priority
+                    src={item.image_url || "https://via.placeholder.com/400"}
                     alt={item.name}
                     width={400}
                     height={300}
@@ -475,7 +662,6 @@ Please contact me.`);
                       objectFit: "cover",
                     }}
                   />
-
                   <div style={{ padding: "18px" }}>
                     <h3
                       style={{
@@ -485,7 +671,6 @@ Please contact me.`);
                     >
                       {item.name}
                     </h3>
-
                     <p
                       style={{
                         color: "#fff",
@@ -495,9 +680,8 @@ Please contact me.`);
                     >
                       ₹ {item.price}
                     </p>
-
                     <Link
-                      href={`/products/${item.id}`}
+                      href={`/products/${encodeId(item.id)}`}
                       style={{
                         display: "inline-block",
                         background: "#d4af37",

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import AdminLayout from "../../components/admin/AdminLayout";
 
 type GalleryItem = {
@@ -193,7 +194,15 @@ export default function AdminGalleryPage() {
               key={item.id}
               className="bg-[#1b1b1b] border border-yellow-500/20 rounded-xl overflow-hidden"
             >
-              <img src={item.image_url} alt={item.caption || "Gallery image"} className="w-full h-52 object-cover" />
+              <div className="w-full h-52 relative">
+                <Image
+                  src={item.image_url || "/no-image.png"}
+                  alt={item.caption || "Gallery image"}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover w-full h-52"
+                />
+              </div>
 
               <div className="p-4 space-y-3">
                 <input

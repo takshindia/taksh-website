@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import EmptyState from "@/app/components/ui/EmptyState";
 
 export default function AddressesPage() {
   const router = useRouter();
@@ -90,21 +91,9 @@ export default function AddressesPage() {
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400">
-            Loading...
-          </div>
+          <div className="text-center text-gray-400">Loading...</div>
         ) : addresses.length === 0 ? (
-          <div className="rounded-2xl border border-yellow-500/20 bg-[#111] p-10 text-center">
-
-            <h2 className="text-2xl font-semibold">
-              No Address Found
-            </h2>
-
-            <p className="mt-3 text-gray-400">
-              Add your first delivery address.
-            </p>
-
-          </div>
+          <EmptyState title="No Address Found" message="Add your first delivery address." action={{ href: "/addresses/new", label: "Add Address" }} />
         ) : (
           <div className="grid gap-6">
 
